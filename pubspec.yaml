@@ -1,0 +1,81 @@
+name: player_connect
+description: "PlayerConnect - Sports Field Booking Mobile App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # State Management
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+  
+  # HTTP & API
+  dio: ^5.8.0+1
+  
+  # Secure Storage
+  flutter_secure_storage: ^9.2.4
+  
+  # Google Sign In
+  google_sign_in: ^6.3.0
+  
+  # Location Services
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  
+  # Maps & UI Components
+  google_maps_flutter: ^2.12.3
+  sliding_up_panel: ^2.0.0+1
+  flutter_card_swiper: ^7.0.2
+  
+  # Dependency Injection
+  get_it: ^8.2.0
+  injectable: ^2.5.1
+  
+  # UI & Fonts
+  google_fonts: ^6.3.0
+  table_calendar: ^3.1.1
+  
+  # Utils
+  json_annotation: ^4.9.0
+  dartz: ^0.10.1
+  
+  # WebSocket & Chat
+  stomp_dart_client: ^2.0.0
+  web_socket_channel: ^3.0.1
+  
+  # SVG Support
+  flutter_svg: ^2.2.0
+
+  carousel_slider: ^5.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  bloc_lint: ^0.2.1
+
+  # Code Generation
+  build_runner: ^2.6.0
+  injectable_generator: ^2.8.1
+  json_serializable: ^6.10.0
+  
+  # Testing
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/banner/

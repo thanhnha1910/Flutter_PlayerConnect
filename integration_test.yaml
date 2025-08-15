@@ -1,0 +1,15 @@
+# Integration test configuration
+name: integration_test
+description: Integration tests for PlayerConnect app
+
+dependencies:
+  flutter:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_driver:
+    sdk: flutter
