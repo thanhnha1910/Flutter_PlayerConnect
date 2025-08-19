@@ -9,7 +9,6 @@ import '../../../domain/repositories/auth_repository.dart';
 import '../auth/auth_event.dart';
 import '../auth/auth_state.dart';
 
-@injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;

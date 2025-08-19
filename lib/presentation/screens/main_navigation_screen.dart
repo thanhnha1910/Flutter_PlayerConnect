@@ -5,8 +5,11 @@ import '../../core/di/injection.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/explore/explore_bloc.dart';
 import '../bloc/location/location_bloc.dart';
+import '../bloc/community/community_bloc.dart'; // Added
+import '../bloc/auth/auth_bloc.dart'; // Added
 import 'home/home_screen.dart';
 import 'explore/explore_screen.dart';
+import 'community/community_screen.dart'; // Added
 import 'activity/activity_screen.dart';
 import 'messages/messages_screen.dart';
 import 'account/account_screen.dart';
@@ -24,6 +27,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     HomeScreen(),
     const ExploreScreen(),
+    const CommunityScreen(),
     const ActivityScreen(),
     const MessagesScreen(),
     const AccountScreen(),
@@ -39,6 +43,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       icon: Icon(Icons.explore_outlined),
       activeIcon: Icon(Icons.explore),
       label: 'Explore',
+    ),
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.people_alt_outlined), // Added icon for Community
+      activeIcon: Icon(Icons.people_alt), // Added active icon for Community
+      label: 'Community', // Added label for Community
     ),
     const BottomNavigationBarItem(
       icon: Icon(Icons.local_activity_outlined),
@@ -71,6 +80,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         BlocProvider<LocationBloc>(
           create: (context) => getIt<LocationBloc>(),
         ),
+        BlocProvider<CommunityBloc>(
+          create: (context) => getIt<CommunityBloc>(),
+        ),
       ],
       child: Scaffold(
         body: IndexedStack(
@@ -78,6 +90,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           children: [
             HomeScreen(),
             const ExploreScreen(),
+            const CommunityScreen(),
             const ActivityScreen(),
             const MessagesScreen(),
             const AccountScreen(),

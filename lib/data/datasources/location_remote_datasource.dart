@@ -78,7 +78,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
-      print('Error in getLocations: $e');
+      print('Full DioException in getLocations: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -200,6 +200,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in getAllLocationsForCards: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -234,6 +235,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in getActiveSports: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -271,6 +273,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in searchSportsByName: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -296,6 +299,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in getLocationById: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -329,6 +333,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in getAvailableTimeSlots: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -367,6 +372,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in createBooking: $e');
       if (e is DioException) {
         rethrow;
       }
@@ -391,6 +397,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } catch (e) {
+      print('Full DioException in getDetails: $e');
       if (e is DioException) {
         rethrow;
       }

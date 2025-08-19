@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:player_connect/presentation/bloc/community/community_bloc.dart';
 import 'package:player_connect/presentation/screens/auth/login_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/di/injection.dart';
@@ -35,6 +36,9 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => getIt<LocationBloc>(),
         ),
+        BlocProvider(
+          create: (context) => getIt<CommunityBloc>(),
+        ),
       ],
       child: MaterialApp(
         title: 'PlayerConnect',
@@ -47,8 +51,19 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Removed: context.read<AuthBloc>().add(AuthCheckRequested());
+  }
 
   @override
   Widget build(BuildContext context) {

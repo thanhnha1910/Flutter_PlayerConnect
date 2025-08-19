@@ -68,6 +68,15 @@ class ApiConstants {
   // Chatbot endpoints (Backend API)
   static const String chatbotQueryEndpoint = '/chatbot/query';
   static const String chatbotHealthEndpoint = '/chatbot/health';
+
+  // Community endpoints
+  static const String getPostsEndpoint = '/posts';
+  static const String createPostEndpoint = '/posts';
+  static const String likePostEndpoint = '/posts/like';
+  static const String getCommentsEndpoint = '/comments';
+  static const String createCommentEndpoint = 'comments';
+  static const String likeCommentEndpoint = '/comments/like';
+  static const String replyCommentEndpoint = '/comments/reply';
   
   // Headers
   static const String contentType = 'application/json';

@@ -26,6 +26,8 @@ import 'package:player_connect/data/datasources/chat_remote_data_source.dart'
     as _i700;
 import 'package:player_connect/data/datasources/chatbot_remote_datasource.dart'
     as _i43;
+import 'package:player_connect/data/datasources/community_remote_datasource.dart'
+    as _i819;
 import 'package:player_connect/data/datasources/location_remote_datasource.dart'
     as _i1070;
 import 'package:player_connect/data/datasources/websocket_client.dart' as _i683;
@@ -35,6 +37,8 @@ import 'package:player_connect/data/repositories/chat_repository_impl.dart'
     as _i169;
 import 'package:player_connect/data/repositories/chatbot_repository_impl.dart'
     as _i278;
+import 'package:player_connect/data/repositories/community_repository_impl.dart'
+    as _i496;
 import 'package:player_connect/data/repositories/location_repository_impl.dart'
     as _i509;
 import 'package:player_connect/domain/repositories/auth_repository.dart'
@@ -43,6 +47,8 @@ import 'package:player_connect/domain/repositories/chat_repository.dart'
     as _i133;
 import 'package:player_connect/domain/repositories/chatbot_repository.dart'
     as _i936;
+import 'package:player_connect/domain/repositories/community_repository.dart'
+    as _i693;
 import 'package:player_connect/domain/repositories/location_repository.dart'
     as _i339;
 import 'package:player_connect/domain/usecases/auth/forgot_password_usecase.dart'
@@ -71,6 +77,22 @@ import 'package:player_connect/domain/usecases/chat/send_message_usecase.dart'
     as _i1000;
 import 'package:player_connect/domain/usecases/chat/subscribe_to_room_usecase.dart'
     as _i312;
+import 'package:player_connect/domain/usecases/community/add_comment_usecase.dart'
+    as _i461;
+import 'package:player_connect/domain/usecases/community/create_post_usecase.dart'
+    as _i379;
+import 'package:player_connect/domain/usecases/community/get_comments_usecase.dart'
+    as _i552;
+import 'package:player_connect/domain/usecases/community/get_posts_usecase.dart'
+    as _i419;
+import 'package:player_connect/domain/usecases/community/like_comment_usecase.dart'
+    as _i464;
+import 'package:player_connect/domain/usecases/community/like_post_usecase.dart'
+    as _i533;
+import 'package:player_connect/domain/usecases/community/reply_comment_usecase.dart'
+    as _i250;
+import 'package:player_connect/domain/usecases/community/reply_to_comment_usecase.dart'
+    as _i801;
 import 'package:player_connect/domain/usecases/get_active_sports_usecase.dart'
     as _i183;
 import 'package:player_connect/domain/usecases/get_location_cards_usecase.dart'
@@ -92,6 +114,10 @@ import 'package:player_connect/presentation/bloc/chat_messages/chat_rooms_bloc.d
     as _i159;
 import 'package:player_connect/presentation/bloc/chatbot/chat_bloc.dart'
     as _i294;
+import 'package:player_connect/presentation/bloc/community/comments_bloc.dart'
+    as _i927;
+import 'package:player_connect/presentation/bloc/community/community_bloc.dart'
+    as _i915;
 import 'package:player_connect/presentation/bloc/explore/explore_bloc.dart'
     as _i1035;
 import 'package:player_connect/presentation/bloc/home/home_bloc.dart' as _i950;
@@ -115,6 +141,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i116.GoogleSignIn>(() => registerModule.googleSignIn);
     gh.lazySingleton<_i519.Client>(() => registerModule.httpClient);
     gh.lazySingleton<String>(() => registerModule.baseUrl);
+    gh.lazySingleton<_i976.AuthBloc>(() => registerModule.authBloc());
     gh.lazySingleton<_i187.LocationPermissionService>(
       () => _i187.LocationPermissionService(),
     );
@@ -131,6 +158,10 @@ extension GetItInjectableX on _i174.GetIt {
         baseUrl: gh<String>(),
         secureStorage: gh<_i43.SecureStorage>(),
       ),
+    );
+    gh.lazySingleton<_i819.CommunityRemoteDataSource>(
+      () =>
+          _i819.CommunityRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
     );
     gh.lazySingleton<_i43.ChatbotRemoteDataSource>(
       () => _i43.ChatbotRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
@@ -150,11 +181,40 @@ extension GetItInjectableX on _i174.GetIt {
         remoteDataSource: gh<_i1070.LocationRemoteDataSource>(),
       ),
     );
+    gh.lazySingleton<_i693.CommunityRepository>(
+      () => _i496.CommunityRepositoryImpl(
+        remoteDataSource: gh<_i819.CommunityRemoteDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i1012.AuthRepository>(
       () => _i136.AuthRepositoryImpl(
         gh<_i287.AuthRemoteDataSource>(),
         gh<_i43.SecureStorage>(),
       ),
+    );
+    gh.lazySingleton<_i419.GetPostsUseCase>(
+      () => _i419.GetPostsUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i379.CreatePostUseCase>(
+      () => _i379.CreatePostUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i533.LikePostUseCase>(
+      () => _i533.LikePostUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i552.GetCommentsUseCase>(
+      () => _i552.GetCommentsUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i461.AddCommentUseCase>(
+      () => _i461.AddCommentUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i464.LikeCommentUseCase>(
+      () => _i464.LikeCommentUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i250.ReplyCommentUseCase>(
+      () => _i250.ReplyCommentUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i801.ReplyToCommentUseCase>(
+      () => _i801.ReplyToCommentUseCase(gh<_i693.CommunityRepository>()),
     );
     gh.lazySingleton<_i936.ChatbotRepository>(
       () => _i278.ChatbotRepositoryImpl(
@@ -169,20 +229,20 @@ extension GetItInjectableX on _i174.GetIt {
         authRepository: gh<_i1012.AuthRepository>(),
       ),
     );
-    gh.lazySingleton<_i860.GetLocationsUseCase>(
-      () => _i860.GetLocationsUseCase(gh<_i339.LocationRepository>()),
+    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
+      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i767.GetLocationCardsUseCase>(
       () => _i767.GetLocationCardsUseCase(gh<_i339.LocationRepository>()),
     );
-    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
-      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
-    );
-    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
-      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
-    );
     gh.lazySingleton<_i266.GetLocationDetailsUseCase>(
       () => _i266.GetLocationDetailsUseCase(gh<_i339.LocationRepository>()),
+    );
+    gh.lazySingleton<_i860.GetLocationsUseCase>(
+      () => _i860.GetLocationsUseCase(gh<_i339.LocationRepository>()),
+    );
+    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
+      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i598.SearchLocationsUseCase>(
       () => _i598.SearchLocationsUseCase(gh<_i339.LocationRepository>()),
@@ -190,8 +250,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1066.ForgotPasswordUseCase>(
       () => _i1066.ForgotPasswordUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i199.RegisterUseCase>(
-      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i472.GoogleSignInUseCase>(
+      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
     );
     gh.lazySingleton<_i894.LoginUseCase>(
       () => _i894.LoginUseCase(gh<_i1012.AuthRepository>()),
@@ -199,29 +259,38 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i854.LogoutUseCase>(
       () => _i854.LogoutUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i472.GoogleSignInUseCase>(
-      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i199.RegisterUseCase>(
+      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
+    );
+    gh.factory<_i927.CommentsBloc>(
+      () => _i927.CommentsBloc(
+        getCommentsUseCase: gh<_i552.GetCommentsUseCase>(),
+        addCommentUseCase: gh<_i461.AddCommentUseCase>(),
+        likeCommentUseCase: gh<_i464.LikeCommentUseCase>(),
+        replyToCommentUseCase: gh<_i801.ReplyToCommentUseCase>(),
+        authBloc: gh<_i976.AuthBloc>(),
+      ),
     );
     gh.factory<_i719.ConnectWebSocketUseCase>(
       () => _i719.ConnectWebSocketUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i312.SubscribeToRoomUseCase>(
-      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i847.JoinChatRoomUseCase>(
-      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i729.GetChatRoomsUseCase>(
-      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i708.CreateChatRoomUseCase>(
+      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i502.GetChatMessagesUseCase>(
       () => _i502.GetChatMessagesUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i708.CreateChatRoomUseCase>(
-      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i729.GetChatRoomsUseCase>(
+      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i847.JoinChatRoomUseCase>(
+      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i1000.SendMessageUseCase>(
       () => _i1000.SendMessageUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i312.SubscribeToRoomUseCase>(
+      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i159.ChatRoomsBloc>(
       () => _i159.ChatRoomsBloc(
@@ -240,18 +309,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i641.SendChatbotMessageUseCase>(
       () => _i641.SendChatbotMessageUseCase(gh<_i936.ChatbotRepository>()),
     );
+    gh.factory<_i915.CommunityBloc>(
+      () => registerModule.communityBloc(
+        gh<_i419.GetPostsUseCase>(),
+        gh<_i533.LikePostUseCase>(),
+        gh<_i379.CreatePostUseCase>(),
+        gh<_i552.GetCommentsUseCase>(),
+        gh<_i461.AddCommentUseCase>(),
+        gh<_i464.LikeCommentUseCase>(),
+        gh<_i250.ReplyCommentUseCase>(),
+        gh<_i976.AuthBloc>(),
+      ),
+    );
     gh.factory<_i415.DeleteMessageUseCase>(
       () => _i415.DeleteMessageUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i976.AuthBloc>(
-      () => _i976.AuthBloc(
-        loginUseCase: gh<_i894.LoginUseCase>(),
-        registerUseCase: gh<_i199.RegisterUseCase>(),
-        googleSignInUseCase: gh<_i472.GoogleSignInUseCase>(),
-        forgotPasswordUseCase: gh<_i1066.ForgotPasswordUseCase>(),
-        logoutUseCase: gh<_i854.LogoutUseCase>(),
-        authRepository: gh<_i1012.AuthRepository>(),
-      ),
     );
     gh.factory<_i1035.ExploreBloc>(
       () => _i1035.ExploreBloc(

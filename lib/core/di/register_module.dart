@@ -3,7 +3,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:http/http.dart' as http;
+import 'package:player_connect/presentation/bloc/auth/auth_bloc.dart';
+import 'package:player_connect/presentation/bloc/community/community_bloc.dart';
+import 'package:player_connect/domain/usecases/community/add_comment_usecase.dart';
+import 'package:player_connect/domain/usecases/community/create_post_usecase.dart';
+import 'package:player_connect/domain/usecases/community/get_comments_usecase.dart';
+import 'package:player_connect/domain/usecases/community/get_posts_usecase.dart';
+import 'package:player_connect/domain/usecases/community/like_comment_usecase.dart';
+import 'package:player_connect/domain/usecases/community/like_post_usecase.dart';
+import 'package:player_connect/domain/usecases/community/reply_comment_usecase.dart';
 import '../constants/api_constants.dart';
+import 'injection.dart';
 
 @module
 abstract class RegisterModule {
@@ -24,4 +34,37 @@ abstract class RegisterModule {
 
   @lazySingleton
   String get baseUrl => ApiConstants.baseUrl;
+
+  @lazySingleton
+  AuthBloc authBloc() => AuthBloc(
+        loginUseCase: getIt(),
+        registerUseCase: getIt(),
+        googleSignInUseCase: getIt(),
+        forgotPasswordUseCase: getIt(),
+        logoutUseCase: getIt(),
+        authRepository: getIt(),
+      );
+
+  @injectable
+  @lazySingleton
+  CommunityBloc communityBloc(
+    GetPostsUseCase getPostsUseCase,
+    LikePostUseCase likePostUseCase,
+    CreatePostUseCase createPostUseCase,
+    GetCommentsUseCase getCommentsUseCase,
+    AddCommentUseCase addCommentUseCase,
+    LikeCommentUseCase likeCommentUseCase,
+    ReplyCommentUseCase replyCommentUseCase,
+    AuthBloc authBloc,
+  ) =>
+      CommunityBloc(
+        getPostsUseCase: getPostsUseCase,
+        likePostUseCase: likePostUseCase,
+        createPostUseCase: createPostUseCase,
+        getCommentsUseCase: getCommentsUseCase,
+        addCommentUseCase: addCommentUseCase,
+        likeCommentUseCase: likeCommentUseCase,
+        replyCommentUseCase: replyCommentUseCase,
+        authBloc: authBloc,
+      );
 }
