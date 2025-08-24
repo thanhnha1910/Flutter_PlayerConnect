@@ -11,7 +11,7 @@ import 'presentation/bloc/auth/auth_state.dart';
 import 'presentation/bloc/location/location_bloc.dart';
 import 'presentation/screens/main_navigation_screen.dart';
 import 'presentation/widgets/loading_overlay.dart';
-
+import 'presentation/bloc/payment/payment_bloc.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // Set up BLoC observer for debugging
@@ -34,6 +34,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => getIt<LocationBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<PaymentBloc>(), // ✅ thêm dòng này
         ),
       ],
       child: MaterialApp(

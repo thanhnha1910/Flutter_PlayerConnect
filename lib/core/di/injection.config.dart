@@ -22,39 +22,69 @@ import 'package:player_connect/core/services/location_permission_service.dart'
 import 'package:player_connect/core/storage/secure_storage.dart' as _i43;
 import 'package:player_connect/data/datasources/auth_remote_datasource.dart'
     as _i287;
+import 'package:player_connect/data/datasources/booking_remote_datasource.dart'
+    as _i320;
 import 'package:player_connect/data/datasources/chat_remote_data_source.dart'
     as _i700;
 import 'package:player_connect/data/datasources/chatbot_remote_datasource.dart'
     as _i43;
 import 'package:player_connect/data/datasources/location_remote_datasource.dart'
     as _i1070;
+import 'package:player_connect/data/datasources/payment_remote_datasource.dart'
+    as _i640;
+import 'package:player_connect/data/datasources/venue_remote_datasource.dart'
+    as _i509;
 import 'package:player_connect/data/datasources/websocket_client.dart' as _i683;
 import 'package:player_connect/data/repositories/auth_repository_impl.dart'
     as _i136;
+import 'package:player_connect/data/repositories/booking_repository_impl.dart'
+    as _i1007;
 import 'package:player_connect/data/repositories/chat_repository_impl.dart'
     as _i169;
 import 'package:player_connect/data/repositories/chatbot_repository_impl.dart'
     as _i278;
 import 'package:player_connect/data/repositories/location_repository_impl.dart'
     as _i509;
+import 'package:player_connect/data/repositories/payment_repository_impl.dart'
+    as _i792;
+import 'package:player_connect/data/repositories/venue_repository_impl.dart'
+    as _i146;
 import 'package:player_connect/domain/repositories/auth_repository.dart'
     as _i1012;
+import 'package:player_connect/domain/repositories/booking_repository.dart'
+    as _i1040;
 import 'package:player_connect/domain/repositories/chat_repository.dart'
     as _i133;
 import 'package:player_connect/domain/repositories/chatbot_repository.dart'
     as _i936;
 import 'package:player_connect/domain/repositories/location_repository.dart'
     as _i339;
+import 'package:player_connect/domain/repositories/payment_repository.dart'
+    as _i1041;
+import 'package:player_connect/domain/repositories/venue_repository.dart'
+    as _i82;
 import 'package:player_connect/domain/usecases/auth/forgot_password_usecase.dart'
     as _i1066;
+import 'package:player_connect/domain/usecases/auth/getpaymentstatus_usecase.dart'
+    as _i303;
 import 'package:player_connect/domain/usecases/auth/google_signin_usecase.dart'
     as _i472;
+import 'package:player_connect/domain/usecases/auth/initiatepayment_usecase.dart'
+    as _i802;
 import 'package:player_connect/domain/usecases/auth/login_usecase.dart'
     as _i894;
 import 'package:player_connect/domain/usecases/auth/logout_usecase.dart'
     as _i854;
 import 'package:player_connect/domain/usecases/auth/register_usecase.dart'
     as _i199;
+import 'package:player_connect/domain/usecases/booking/cancel_booking_usecase.dart'
+    as _i511;
+import 'package:player_connect/domain/usecases/booking/check_availability_usecase.dart'
+    as _i806;
+import 'package:player_connect/domain/usecases/booking/create_booking_usecase.dart'
+    as _i1023;
+import 'package:player_connect/domain/usecases/booking/get_user_bookings_usecase.dart'
+    as _i52;
 import 'package:player_connect/domain/usecases/chat/connect_websocket_usecase.dart'
     as _i719;
 import 'package:player_connect/domain/usecases/chat/create_chat_room_usecase.dart'
@@ -71,6 +101,8 @@ import 'package:player_connect/domain/usecases/chat/send_message_usecase.dart'
     as _i1000;
 import 'package:player_connect/domain/usecases/chat/subscribe_to_room_usecase.dart'
     as _i312;
+import 'package:player_connect/domain/usecases/fetch_venue_details_usecase.dart'
+    as _i740;
 import 'package:player_connect/domain/usecases/get_active_sports_usecase.dart'
     as _i183;
 import 'package:player_connect/domain/usecases/get_location_cards_usecase.dart'
@@ -86,6 +118,8 @@ import 'package:player_connect/domain/usecases/search_locations_usecase.dart'
 import 'package:player_connect/domain/usecases/send_chatbot_message_usecase.dart'
     as _i641;
 import 'package:player_connect/presentation/bloc/auth/auth_bloc.dart' as _i976;
+import 'package:player_connect/presentation/bloc/booking/booking_bloc.dart'
+    as _i590;
 import 'package:player_connect/presentation/bloc/chat_messages/chat_messages_bloc.dart'
     as _i1068;
 import 'package:player_connect/presentation/bloc/chat_messages/chat_rooms_bloc.dart'
@@ -97,6 +131,8 @@ import 'package:player_connect/presentation/bloc/explore/explore_bloc.dart'
 import 'package:player_connect/presentation/bloc/home/home_bloc.dart' as _i950;
 import 'package:player_connect/presentation/bloc/location/location_bloc.dart'
     as _i633;
+import 'package:player_connect/presentation/bloc/payment/payment_bloc.dart'
+    as _i234;
 import 'package:player_connect/presentation/bloc/venue_details/venue_details_bloc.dart'
     as _i548;
 
@@ -122,8 +158,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i43.SecureStorage>(
       () => _i43.SecureStorage(gh<_i558.FlutterSecureStorage>()),
     );
+    gh.lazySingleton<_i1040.BookingRepository>(
+      () => _i1007.BookingRepositoryImpl(gh<_i320.BookingRemoteDataSource>()),
+    );
+    gh.factory<_i548.VenueDetailsBloc>(
+      () => _i548.VenueDetailsBloc(
+        fetchVenueDetailsUseCase: gh<_i740.FetchVenueDetailsUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i62.ApiClient>(
-      () => _i62.ApiClient(gh<_i361.Dio>(), gh<_i43.SecureStorage>()),
+      () => _i62.ApiClient(
+        gh<_i361.Dio>(),
+        gh<_i43.SecureStorage>(),
+        dio: gh<_i361.Dio>(),
+      ),
     );
     gh.lazySingleton<_i700.ChatRemoteDataSource>(
       () => _i700.ChatRemoteDataSourceImpl(
@@ -132,8 +180,26 @@ extension GetItInjectableX on _i174.GetIt {
         secureStorage: gh<_i43.SecureStorage>(),
       ),
     );
+    gh.factory<_i806.CheckAvailabilityUseCase>(
+      () => _i806.CheckAvailabilityUseCase(gh<_i1040.BookingRepository>()),
+    );
+    gh.factory<_i1023.CreateBookingUseCase>(
+      () => _i1023.CreateBookingUseCase(gh<_i1040.BookingRepository>()),
+    );
+    gh.factory<_i511.CancelBookingUseCase>(
+      () => _i511.CancelBookingUseCase(gh<_i1040.BookingRepository>()),
+    );
+    gh.factory<_i52.GetUserBookingsUseCase>(
+      () => _i52.GetUserBookingsUseCase(gh<_i1040.BookingRepository>()),
+    );
     gh.lazySingleton<_i43.ChatbotRemoteDataSource>(
       () => _i43.ChatbotRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
+    );
+    gh.lazySingleton<_i640.PaymentRemoteDataSource>(
+      () => _i640.PaymentRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
+    );
+    gh.lazySingleton<_i509.VenueRemoteDataSource>(
+      () => _i509.VenueRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
     );
     gh.lazySingleton<_i1070.LocationRemoteDataSource>(
       () =>
@@ -145,10 +211,22 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i116.GoogleSignIn>(),
       ),
     );
+    gh.factory<_i590.BookingBloc>(
+      () => _i590.BookingBloc(
+        createBookingUseCase: gh<_i1023.CreateBookingUseCase>(),
+        checkAvailabilityUseCase: gh<_i806.CheckAvailabilityUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i1041.PaymentRepository>(
+      () => _i792.PaymentRepositoryImpl(gh<_i640.PaymentRemoteDataSource>()),
+    );
     gh.lazySingleton<_i339.LocationRepository>(
       () => _i509.LocationRepositoryImpl(
         remoteDataSource: gh<_i1070.LocationRemoteDataSource>(),
       ),
+    );
+    gh.lazySingleton<_i82.VenueRepository>(
+      () => _i146.VenueRepositoryImpl(gh<_i509.VenueRemoteDataSource>()),
     );
     gh.lazySingleton<_i1012.AuthRepository>(
       () => _i136.AuthRepositoryImpl(
@@ -169,20 +247,20 @@ extension GetItInjectableX on _i174.GetIt {
         authRepository: gh<_i1012.AuthRepository>(),
       ),
     );
+    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
+      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
+    );
     gh.lazySingleton<_i860.GetLocationsUseCase>(
       () => _i860.GetLocationsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i767.GetLocationCardsUseCase>(
       () => _i767.GetLocationCardsUseCase(gh<_i339.LocationRepository>()),
     );
-    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
-      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
-    );
-    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
-      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
-    );
     gh.lazySingleton<_i266.GetLocationDetailsUseCase>(
       () => _i266.GetLocationDetailsUseCase(gh<_i339.LocationRepository>()),
+    );
+    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
+      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i598.SearchLocationsUseCase>(
       () => _i598.SearchLocationsUseCase(gh<_i339.LocationRepository>()),
@@ -190,8 +268,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1066.ForgotPasswordUseCase>(
       () => _i1066.ForgotPasswordUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i199.RegisterUseCase>(
-      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i472.GoogleSignInUseCase>(
+      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
     );
     gh.lazySingleton<_i894.LoginUseCase>(
       () => _i894.LoginUseCase(gh<_i1012.AuthRepository>()),
@@ -199,29 +277,35 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i854.LogoutUseCase>(
       () => _i854.LogoutUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i472.GoogleSignInUseCase>(
-      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i199.RegisterUseCase>(
+      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
+    );
+    gh.factory<_i303.GetPaymentStatusUseCase>(
+      () => _i303.GetPaymentStatusUseCase(gh<_i1041.PaymentRepository>()),
+    );
+    gh.factory<_i802.InitiatePaymentUseCase>(
+      () => _i802.InitiatePaymentUseCase(gh<_i1041.PaymentRepository>()),
     );
     gh.factory<_i719.ConnectWebSocketUseCase>(
       () => _i719.ConnectWebSocketUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i312.SubscribeToRoomUseCase>(
-      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i847.JoinChatRoomUseCase>(
-      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i729.GetChatRoomsUseCase>(
-      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i708.CreateChatRoomUseCase>(
+      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i502.GetChatMessagesUseCase>(
       () => _i502.GetChatMessagesUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i708.CreateChatRoomUseCase>(
-      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i729.GetChatRoomsUseCase>(
+      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i847.JoinChatRoomUseCase>(
+      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i1000.SendMessageUseCase>(
       () => _i1000.SendMessageUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i312.SubscribeToRoomUseCase>(
+      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i159.ChatRoomsBloc>(
       () => _i159.ChatRoomsBloc(
@@ -262,6 +346,12 @@ extension GetItInjectableX on _i174.GetIt {
         locationPermissionService: gh<_i187.LocationPermissionService>(),
       ),
     );
+    gh.factory<_i234.PaymentBloc>(
+      () => _i234.PaymentBloc(
+        initiatePaymentUseCase: gh<_i802.InitiatePaymentUseCase>(),
+        getPaymentStatusUseCase: gh<_i303.GetPaymentStatusUseCase>(),
+      ),
+    );
     gh.factory<_i294.ChatBloc>(
       () => _i294.ChatBloc(
         sendChatbotMessageUseCase: gh<_i641.SendChatbotMessageUseCase>(),
@@ -270,9 +360,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i950.HomeBloc>(
       () =>
           _i950.HomeBloc(getLocationsUseCase: gh<_i860.GetLocationsUseCase>()),
-    );
-    gh.factory<_i548.VenueDetailsBloc>(
-      () => _i548.VenueDetailsBloc(gh<_i245.GetVenueDetailsUseCase>()),
     );
     gh.factory<_i1068.ChatMessagesBloc>(
       () => _i1068.ChatMessagesBloc(
