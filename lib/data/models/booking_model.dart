@@ -1,19 +1,27 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/booking.dart';
 
 part 'booking_model.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class BookingModel extends Equatable {
+  @JsonKey(name: 'booking_id')
   final int id;
+  @JsonKey(name: 'field_id')
   final int fieldId;
   final String fieldName;
+  @JsonKey(name: 'start_time')
   final DateTime startTime;
+  @JsonKey(name: 'end_time')
   final DateTime endTime;
+  @JsonKey(name: 'total_price')
   final double totalPrice;
   final String status; // 'pending', 'confirmed', 'cancelled', 'completed'
   final String? notes;
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
   const BookingModel({
@@ -33,6 +41,19 @@ class BookingModel extends Equatable {
       _$BookingModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$BookingModelToJson(this);
+
+  Booking toEntity() => Booking(
+    id: id,
+    fieldId: fieldId,
+    fieldName: fieldName,
+    startTime: startTime,
+    endTime: endTime,
+    totalPrice: totalPrice,
+    status: status,
+    notes: notes,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
 
   Duration get duration => endTime.difference(startTime);
 
@@ -59,17 +80,17 @@ class BookingModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        fieldId,
-        fieldName,
-        startTime,
-        endTime,
-        totalPrice,
-        status,
-        notes,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    fieldId,
+    fieldName,
+    startTime,
+    endTime,
+    totalPrice,
+    status,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -99,10 +120,10 @@ class TimeSlot extends Equatable {
 
   @override
   List<Object?> get props => [
-        startTime,
-        endTime,
-        isAvailable,
-        pricePerHour,
-        bookedBy,
-      ];
+    startTime,
+    endTime,
+    isAvailable,
+    pricePerHour,
+    bookedBy,
+  ];
 }

@@ -7,32 +7,32 @@ part of 'booking_model.dart';
 // **************************************************************************
 
 BookingModel _$BookingModelFromJson(Map<String, dynamic> json) => BookingModel(
-  id: (json['id'] as num).toInt(),
-  fieldId: (json['fieldId'] as num).toInt(),
+  id: (json['booking_id'] as num).toInt(),
+  fieldId: (json['field_id'] as num).toInt(),
   fieldName: json['fieldName'] as String,
-  startTime: DateTime.parse(json['startTime'] as String),
-  endTime: DateTime.parse(json['endTime'] as String),
-  totalPrice: (json['totalPrice'] as num).toDouble(),
+  startTime: DateTime.parse(json['start_time'] as String),
+  endTime: DateTime.parse(json['end_time'] as String),
+  totalPrice: (json['total_price'] as num).toDouble(),
   status: json['status'] as String,
   notes: json['notes'] as String?,
-  createdAt: DateTime.parse(json['createdAt'] as String),
-  updatedAt: json['updatedAt'] == null
+  createdAt: DateTime.parse(json['created_at'] as String),
+  updatedAt: json['updated_at'] == null
       ? null
-      : DateTime.parse(json['updatedAt'] as String),
+      : DateTime.parse(json['updated_at'] as String),
 );
 
 Map<String, dynamic> _$BookingModelToJson(BookingModel instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'fieldId': instance.fieldId,
+      'booking_id': instance.id,
+      'field_id': instance.fieldId,
       'fieldName': instance.fieldName,
-      'startTime': instance.startTime.toIso8601String(),
-      'endTime': instance.endTime.toIso8601String(),
-      'totalPrice': instance.totalPrice,
+      'start_time': instance.startTime.toIso8601String(),
+      'end_time': instance.endTime.toIso8601String(),
+      'total_price': instance.totalPrice,
       'status': instance.status,
       'notes': instance.notes,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt?.toIso8601String(),
     };
 
 TimeSlot _$TimeSlotFromJson(Map<String, dynamic> json) => TimeSlot(

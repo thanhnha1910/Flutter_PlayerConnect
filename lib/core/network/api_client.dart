@@ -8,12 +8,12 @@ import '../storage/secure_storage.dart';
 class ApiClient {
   final Dio _dio;
   final SecureStorage _secureStorage;
-  
-  ApiClient(this._dio, this._secureStorage) {
+
+  ApiClient(this._dio, this._secureStorage, {required Dio dio}) {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
-    
+
     // Add enhanced interceptor for authentication and error handling
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -21,7 +21,7 @@ class ApiClient {
           try {
             final token = await _secureStorage.getToken();
             if (token != null && token.isNotEmpty) {
-              options.headers[ApiConstants.authorization] = 
+              options.headers[ApiConstants.authorization] =
                   '${ApiConstants.bearer} $token';
               if (kDebugMode) {
                 print('[API] Request to ${options.path} with token: ${token.substring(0, 20)}...');
@@ -31,11 +31,11 @@ class ApiClient {
                 print('[API] Request to ${options.path} without token');
               }
             }
-            
+
             // Add common headers
             options.headers['Content-Type'] = ApiConstants.contentType;
             options.headers['Accept'] = ApiConstants.contentType;
-            
+
           } catch (e) {
             if (kDebugMode) {
               print('[API] Error adding auth header: $e');
@@ -53,10 +53,10 @@ class ApiClient {
           if (error.response?.statusCode == 401) {
             try {
               final newAccessToken = await _refreshToken();
-              
+
               // Clone the original request and update the token
               final options = error.requestOptions;
-              options.headers[ApiConstants.authorization] = 
+              options.headers[ApiConstants.authorization] =
                   '${ApiConstants.bearer} $newAccessToken';
 
               // Retry the request
@@ -75,7 +75,7 @@ class ApiClient {
         },
       ),
     );
-    
+
     // Add logging interceptor for debugging
     if (kDebugMode) {
       _dio.interceptors.add(
@@ -90,7 +90,7 @@ class ApiClient {
       );
     }
   }
-  
+
   Future<String> _refreshToken() async {
     final refreshToken = await _secureStorage.getRefreshToken();
     if (refreshToken == null) {
@@ -117,6 +117,6 @@ class ApiClient {
       throw Exception('Failed to refresh token');
     }
   }
-  
+
   Dio get dio => _dio;
 }
