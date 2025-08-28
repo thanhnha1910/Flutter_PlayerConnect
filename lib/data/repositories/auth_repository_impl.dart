@@ -21,6 +21,9 @@ class AuthRepositoryImpl implements AuthRepository {
     
       final result = await remoteDataSource.login(email, password);
       
+      // Debug logging
+      print('[AuthRepository] Login result: id=${result.id}, username=${result.username}, email=${result.email}');
+      
       await secureStorage.saveToken(result.token);
       await secureStorage.saveRefreshToken(result.refreshToken);
       await secureStorage.saveUserData(
@@ -29,6 +32,8 @@ class AuthRepositoryImpl implements AuthRepository {
         name: result.fullName,
       );
       
+      // Debug logging after save
+      print('[AuthRepository] Saved userId: ${result.id.toString()}');
     
       return Right(result.toUser());
     } catch (e) {

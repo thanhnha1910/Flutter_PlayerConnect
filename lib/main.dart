@@ -9,6 +9,8 @@ import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/auth/auth_event.dart';
 import 'presentation/bloc/auth/auth_state.dart';
 import 'presentation/bloc/location/location_bloc.dart';
+import 'presentation/bloc/community/community_bloc.dart';
+import 'presentation/bloc/tournament/tournament_bloc.dart';
 import 'presentation/screens/main_navigation_screen.dart';
 import 'presentation/widgets/loading_overlay.dart';
 
@@ -34,6 +36,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => getIt<LocationBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<CommunityBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<TournamentBloc>(),
         ),
       ],
       child: MaterialApp(

@@ -9,7 +9,7 @@ import '../../../domain/repositories/auth_repository.dart';
 import '../auth/auth_event.dart';
 import '../auth/auth_state.dart';
 
-@injectable
+@lazySingleton
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
@@ -26,7 +26,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.logoutUseCase,
     required this.authRepository,
   }) : super(AuthInitial()) {
-    print('🔐 [AuthBloc] Constructor - AuthBloc initialized with AuthInitial state');
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
@@ -39,37 +38,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('🔐 [AuthBloc] AuthCheckRequested event received');
-    print('🔐 [AuthBloc] Emitting AuthLoading state');
+  
     emit(AuthLoading());
     
-    print('🔐 [AuthBloc] Calling authRepository.isLoggedIn()');
     final isLoggedIn = await authRepository.isLoggedIn();
-    print('🔐 [AuthBloc] isLoggedIn result: $isLoggedIn');
     
     if (isLoggedIn) {
-      print('🔐 [AuthBloc] User is logged in, calling getCurrentUser()');
       final result = await authRepository.getCurrentUser();
       result.fold(
         (failure) {
-          print('🔐 [AuthBloc] getCurrentUser failed: ${failure.message}');
-          print('🔐 [AuthBloc] Emitting Unauthenticated state');
+         
           emit(Unauthenticated());
         },
         (user) {
           if (user != null) {
-            print('🔐 [AuthBloc] getCurrentUser success: ${user.username} (ID: ${user.id})');
-            print('🔐 [AuthBloc] Emitting Authenticated state');
+         
             emit(Authenticated(user: user));
           } else {
-            print('🔐 [AuthBloc] getCurrentUser returned null user');
-            print('🔐 [AuthBloc] Emitting Unauthenticated state');
+         
             emit(Unauthenticated());
           }
         },
       );
     } else {
-      print('🔐 [AuthBloc] User is not logged in, emitting Unauthenticated state');
       emit(Unauthenticated());
     }
   }
@@ -78,21 +69,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('=== BLoC: LoginRequested event received ===');
-    print('BLoC: Email: ${event.email}');
-    print('BLoC: Password length: ${event.password.length}');
-    print('BLoC: Emitting AuthLoading state');
+   
     
     emit(AuthLoading());
     
-    print('BLoC: Calling LoginUseCase...');
     final result = await loginUseCase(event.email, event.password);
     
-    print('BLoC: LoginUseCase completed, processing result...');
     result.fold(
       (failure) {
-        print('BLoC: Login failed with error: ${failure.message}');
-        print('BLoC: Emitting AuthFailure state');
+       
         emit(AuthFailure(message: failure.message));
       },
       (user) {

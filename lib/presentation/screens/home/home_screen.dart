@@ -8,6 +8,12 @@ import '../../bloc/location/location_bloc.dart' as location;
 import '../../../presentation/widgets/location_header.dart';
 import '../../bloc/explore/explore_bloc.dart' as explore;
 import '../../../core/di/injection.dart';
+import '../community/community_screen.dart';
+import '../../bloc/community/community_bloc.dart';
+import '../draft_match/draft_match_list_screen.dart';
+import '../../bloc/draft_match/draft_match_bloc.dart';
+import '../tournament/tournament_list_screen.dart';
+import '../../bloc/tournament/tournament_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key}) {
@@ -132,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   void _showLocationPermissionDialog(BuildContext context, String message) {
+    final parentContext = context; // Lưu context gốc
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -149,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                context.read<HomeBloc>().add(const RequestLocationPermission());
+                parentContext.read<HomeBloc>().add(const RequestLocationPermission());
               },
               child: const Text('Cấp quyền'),
             ),
@@ -160,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showLocationServiceDialog(BuildContext context, String message) {
+    final parentContext = context; // Lưu context gốc
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -178,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
                 // Retry loading map data
-                context.read<HomeBloc>().add(const LoadMapData());
+                parentContext.read<HomeBloc>().add(const LoadMapData());
               },
               child: const Text('Thử lại'),
             ),
@@ -337,29 +345,51 @@ class _HomeScreenState extends State<HomeScreen> {
     final services = [
       {'icon': Icons.sports_soccer, 'label': 'Find Field', 'color': AppTheme.primaryAccent},
       {'icon': Icons.group_add, 'label': 'Find Match', 'color': AppTheme.secondaryAccent},
-      {'icon': Icons.groups, 'label': 'My Teams', 'color': AppTheme.accentColor},
-      {'icon': Icons.account_balance_wallet, 'label': 'Wallet', 'color': AppTheme.primaryAccent},
+      {'icon': Icons.groups, 'label': 'Community', 'color': AppTheme.accentColor},
       {'icon': Icons.emoji_events, 'label': 'Tournaments', 'color': AppTheme.secondaryAccent},
-      {'icon': Icons.local_offer, 'label': 'Offers', 'color': AppTheme.accentColor},
-      {'icon': Icons.fitness_center, 'label': 'Training', 'color': AppTheme.primaryAccent},
-      {'icon': Icons.more_horiz, 'label': 'More', 'color': AppTheme.textSecondary},
+      {'icon': Icons.edit_note, 'label': 'Draft Match', 'color': AppTheme.primaryAccent},
     ];
 
     return SliverPadding(
       padding: const EdgeInsets.all(AppTheme.spacingL),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 1.0,
-          crossAxisSpacing: AppTheme.spacingM,
-          mainAxisSpacing: AppTheme.spacingM,
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          children: [
+            // First row with 3 services
+            Row(
+              children: services.take(3).map((service) {
+                final index = services.indexOf(service);
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: index < 2 ? AppTheme.spacingM : 0,
+                    ),
+                    child: _buildServiceItem(service, index),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            // Second row with 2 services, centered
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: services.skip(3).map((service) {
+                final index = services.indexOf(service);
+                return SizedBox(
+                  width: (MediaQuery.of(context).size.width - AppTheme.spacingL * 2 - AppTheme.spacingM) / 3,
+                  child: _buildServiceItem(service, index),
+                );
+              }).toList(),
+            ),
+          ],
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final service = services[index];
-            return GestureDetector(
-              onTap: () {
-                final service = services[index];
+      ),
+    );
+  }
+
+  Widget _buildServiceItem(Map<String, dynamic> service, int index) {
+    return GestureDetector(
+      onTap: () {
                 if (service['label'] == 'Find Field') {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -369,10 +399,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   );
+                } else if (service['label'] == 'Community') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (context) => getIt<CommunityBloc>(),
+                        child: const CommunityScreen(),
+                      ),
+                    ),
+                  );
+                } else if (service['label'] == 'Draft Match') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (context) => getIt<DraftMatchBloc>(),
+                        child: const DraftMatchListScreen(),
+                      ),
+                    ),
+                  );
+                } else if (service['label'] == 'Tournaments') {
+                  Navigator.pushNamed(context, '/tournaments');
                 }
                 // Handle other service taps
               },
-              child: Container(
+      child: Container(
                 decoration: BoxDecoration(
                   color: AppTheme.cardBackground,
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -397,11 +447,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-            );
-          },
-          childCount: services.length,
-        ),
-      ),
     );
   }
 
