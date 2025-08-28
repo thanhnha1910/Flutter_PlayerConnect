@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/di/injection.dart';
+import '../../bloc/notification/notification_bloc.dart';
+import '../../bloc/notification/notification_event.dart';
+import '../../bloc/notification/notification_state.dart';
+import '../../../data/models/notification_model.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -9,233 +15,311 @@ class ActivityScreen extends StatefulWidget {
 }
 
 class _ActivityScreenState extends State<ActivityScreen> {
-  // Placeholder data for community feed
-  final List<Map<String, dynamic>> communityFeed = [
-    {
-      'id': 1,
-      'type': 'match_joined',
-      'userName': 'John Doe',
-      'action': 'just joined a match at',
-      'venue': 'City Sports Center',
-      'time': '2 hours ago',
-      'avatar': 'JD',
-    },
-    {
-      'id': 2,
-      'type': 'milestone',
-      'userName': 'Jane Smith',
-      'action': 'achieved a new milestone:',
-      'milestone': '10 Matches Played!',
-      'time': '4 hours ago',
-      'avatar': 'JS',
-    },
-    {
-      'id': 3,
-      'type': 'match_created',
-      'userName': 'Mike Johnson',
-      'action': 'created a new match at',
-      'venue': 'Downtown Basketball Court',
-      'time': '6 hours ago',
-      'avatar': 'MJ',
-    },
-    {
-      'id': 4,
-      'type': 'team_formed',
-      'userName': 'Sarah Wilson',
-      'action': 'formed a new team:',
-      'teamName': 'Thunder Bolts',
-      'time': '1 day ago',
-      'avatar': 'SW',
-    },
-    {
-      'id': 5,
-      'type': 'achievement',
-      'userName': 'Alex Chen',
-      'action': 'won their first tournament at',
-      'venue': 'Elite Tennis Club',
-      'time': '2 days ago',
-      'avatar': 'AC',
-    },
-    {
-      'id': 6,
-      'type': 'match_joined',
-      'userName': 'David Brown',
-      'action': 'joined a football match at',
-      'venue': 'Green Field Stadium',
-      'time': '3 days ago',
-      'avatar': 'DB',
-    },
-    {
-      'id': 7,
-      'type': 'milestone',
-      'userName': 'Emma Davis',
-      'action': 'reached a new milestone:',
-      'milestone': 'First Victory!',
-      'time': '4 days ago',
-      'avatar': 'ED',
-    },
-  ];
+  late NotificationBloc _notificationBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationBloc = getIt<NotificationBloc>();
+    _notificationBloc.add(const LoadNotifications());
+  }
+
+  @override
+  void dispose() {
+    _notificationBloc.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
-      appBar: AppBar(
-        title: Text(
-          'Activity',
-          style: AppTheme.headingMedium.copyWith(
-            color: Colors.white,
+    return BlocProvider.value(
+      value: _notificationBloc,
+      child: Scaffold(
+        backgroundColor: AppTheme.scaffoldBackground,
+        appBar: AppBar(
+          title: Text(
+            'Activity',
+            style: AppTheme.headingMedium.copyWith(
+              color: Colors.white,
+            ),
           ),
+          backgroundColor: AppTheme.primaryAccent,
+          elevation: 0,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                _notificationBloc.add(const RefreshNotifications());
+              },
+            ),
+          ],
         ),
-        backgroundColor: AppTheme.primaryAccent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        itemCount: communityFeed.length,
-        itemBuilder: (context, index) {
-          return _buildFeedItem(communityFeed[index]);
-        },
+        body: BlocBuilder<NotificationBloc, NotificationState>(
+          builder: (context, state) {
+            if (state is NotificationLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            
+            if (state is NotificationError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppTheme.textSecondary,
+                    ),
+                    const SizedBox(height: AppTheme.spacingM),
+                    Text(
+                      'Không thể tải thông báo',
+                      style: AppTheme.bodyLarge.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      state.message,
+                      style: AppTheme.caption.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppTheme.spacingL),
+                    ElevatedButton(
+                      onPressed: () {
+                        _notificationBloc.add(const RefreshNotifications());
+                      },
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            if (state is NotificationLoaded) {
+              if (state.notifications.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.notifications_none,
+                        size: 64,
+                        color: AppTheme.textSecondary,
+                      ),
+                      const SizedBox(height: AppTheme.spacingM),
+                      Text(
+                        'Chưa có thông báo nào',
+                        style: AppTheme.bodyLarge.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+
+                    ],
+                  ),
+                );
+              }
+              
+              return RefreshIndicator(
+                onRefresh: () async {
+                  _notificationBloc.add(const RefreshNotifications());
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  itemCount: state.notifications.length,
+                  itemBuilder: (context, index) {
+                    return _buildNotificationItem(state.notifications[index]);
+                  },
+                ),
+              );
+            }
+            
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
 
-  /// Builds a feed item
-  Widget _buildFeedItem(Map<String, dynamic> feedItem) {
+  /// Builds a notification item
+  Widget _buildNotificationItem(NotificationModel notification) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
-      decoration: AppTheme.cardDecoration,
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: _getAvatarColor(feedItem['avatar']),
-              child: Text(
-                feedItem['avatar'],
-                style: AppTheme.bodyMedium.copyWith(
+      decoration: AppTheme.cardDecoration.copyWith(
+        color: notification.isRead ? null : AppTheme.primaryAccent.withOpacity(0.05),
+      ),
+      child: InkWell(
+        onTap: () {
+          if (!notification.isRead) {
+            _notificationBloc.add(MarkNotificationAsRead(notification.id));
+          }
+          // Handle notification tap action
+          if (notification.actionUrl != null) {
+            // Navigate to action URL
+          }
+        },
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _getNotificationColor(notification.type),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(
+                  _getNotificationIcon(notification.type),
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  size: AppTheme.iconSizeMedium,
                 ),
               ),
-            ),
-            const SizedBox(width: AppTheme.spacingM),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      style: AppTheme.bodyMedium,
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        TextSpan(
-                          text: feedItem['userName'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' ${feedItem['action']} ',
-                        ),
-                        if (feedItem['venue'] != null)
-                          TextSpan(
-                            text: feedItem['venue'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryAccent,
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            style: AppTheme.bodyMedium.copyWith(
+                              fontWeight: notification.isRead 
+                                  ? FontWeight.normal 
+                                  : FontWeight.bold,
                             ),
                           ),
-                        if (feedItem['milestone'] != null)
-                          TextSpan(
-                            text: feedItem['milestone'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                        ),
+                        if (!notification.isRead)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
                               color: AppTheme.primaryAccent,
-                            ),
-                          ),
-                        if (feedItem['teamName'] != null)
-                          TextSpan(
-                            text: feedItem['teamName'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryAccent,
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: AppTheme.iconSizeSmall,
+                    const SizedBox(height: AppTheme.spacingXS),
+                    Text(
+                      notification.message,
+                      style: AppTheme.bodySmall.copyWith(
                         color: AppTheme.textSecondary,
                       ),
-                      const SizedBox(width: AppTheme.spacingXS),
-                      Text(
-                        feedItem['time'],
-                        style: AppTheme.caption.copyWith(
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: AppTheme.iconSizeSmall,
                           color: AppTheme.textSecondary,
                         ),
-                      ),
-                      const Spacer(),
-                      _getSportIcon(feedItem['type']),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: AppTheme.spacingXS),
+                        Text(
+                          notification.timeAgo,
+                          style: AppTheme.caption.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          notification.typeDisplayName,
+                          style: AppTheme.caption.copyWith(
+                            color: _getNotificationColor(notification.type),
+                          fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// Gets avatar color based on initials
-  Color _getAvatarColor(String initials) {
-    final colors = [
-      AppTheme.primaryAccent,
-      AppTheme.secondaryAccent,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.indigo,
-    ];
-    return colors[initials.hashCode % colors.length];
+  /// Gets notification color based on type
+  Color _getNotificationColor(NotificationType type) {
+    switch (type) {
+      case NotificationType.matchInvitation:
+      case NotificationType.matchReminder:
+        return AppTheme.primaryAccent;
+      case NotificationType.achievement:
+      case NotificationType.milestone:
+        return Colors.amber.shade600;
+      case NotificationType.teamInvitation:
+      case NotificationType.teamUpdate:
+        return AppTheme.secondaryAccent;
+      case NotificationType.system:
+        return Colors.blue;
+      case NotificationType.payment:
+        return Colors.green;
+      case NotificationType.message:
+        return Colors.purple;
+      case NotificationType.friendRequest:
+        return Colors.orange;
+      case NotificationType.bookingConfirmation:
+        return Colors.teal;
+      case NotificationType.newBooking:
+        return Colors.indigo;
+      case NotificationType.newTournament:
+        return Colors.red;
+      case NotificationType.reviewRequest:
+        return Colors.brown;
+      case NotificationType.draftMatchInterest:
+        return Colors.cyan;
+      default:
+        return AppTheme.textSecondary;
+    }
   }
 
-  /// Gets sport icon based on activity type
-  Widget _getSportIcon(String type) {
-    IconData iconData;
-    Color iconColor = AppTheme.textSecondary;
-
+  /// Gets notification icon based on type
+  IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
-      case 'match_joined':
-      case 'match_created':
-        iconData = Icons.sports_soccer;
-        iconColor = AppTheme.primaryAccent;
-        break;
-      case 'milestone':
-      case 'achievement':
-        iconData = Icons.emoji_events;
-        iconColor = Colors.amber.shade600;
-        break;
-      case 'team_formed':
-        iconData = Icons.groups;
-        iconColor = AppTheme.secondaryAccent;
-        break;
+      case NotificationType.matchInvitation:
+      case NotificationType.matchReminder:
+        return Icons.sports_soccer;
+      case NotificationType.achievement:
+      case NotificationType.milestone:
+        return Icons.emoji_events;
+      case NotificationType.teamInvitation:
+      case NotificationType.teamUpdate:
+        return Icons.groups;
+      case NotificationType.system:
+        return Icons.info;
+      case NotificationType.payment:
+        return Icons.payment;
+      case NotificationType.message:
+        return Icons.message;
+      case NotificationType.friendRequest:
+        return Icons.person_add;
+      case NotificationType.bookingConfirmation:
+        return Icons.check_circle;
+      case NotificationType.newBooking:
+        return Icons.event;
+      case NotificationType.newTournament:
+        return Icons.emoji_events;
+      case NotificationType.reviewRequest:
+        return Icons.rate_review;
+      case NotificationType.draftMatchInterest:
+        return Icons.sports;
       default:
-        iconData = Icons.sports;
+        return Icons.notifications;
     }
-
-    return Icon(
-      iconData,
-      size: AppTheme.iconSizeSmall,
-      color: iconColor,
-    );
   }
 }

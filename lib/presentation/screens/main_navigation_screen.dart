@@ -5,6 +5,8 @@ import '../../core/di/injection.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/explore/explore_bloc.dart';
 import '../bloc/location/location_bloc.dart';
+import '../bloc/user/user_bloc.dart';
+import '../bloc/auth/auth_bloc.dart';
 import 'home/home_screen.dart';
 import 'explore/explore_screen.dart';
 import 'activity/activity_screen.dart';
@@ -20,14 +22,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    HomeScreen(),
-    const ExploreScreen(),
-    const ActivityScreen(),
-    const MessagesScreen(),
-    const AccountScreen(),
-  ];
 
   final List<BottomNavigationBarItem> _navigationItems = [
     const BottomNavigationBarItem(
@@ -70,6 +64,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         BlocProvider<LocationBloc>(
           create: (context) => getIt<LocationBloc>(),
+        ),
+        BlocProvider<UserBloc>(
+          create: (context) {
+            final userBloc = getIt<UserBloc>();
+            print('=== MainNavigationScreen: Created UserBloc instance: $userBloc ===');
+            return userBloc;
+          },
+        ),
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>(),
         ),
       ],
       child: Scaffold(

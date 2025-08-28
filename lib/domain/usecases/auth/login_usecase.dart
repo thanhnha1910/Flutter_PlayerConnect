@@ -12,13 +12,9 @@ class LoginUseCase {
   LoginUseCase(this.repository);
   
   Future<Either<Failure, UserModel>> call(String email, String password) {
-    print('=== UseCase: Executing LoginUseCase ===');
-    print('UseCase: Email: $email');
-    print('UseCase: Password length: ${password.length}');
-    print('UseCase: Calling repository.login()...');
+  
     
     final result = repository.login(email, password);
-    print('UseCase: Repository call completed, returning result');
     
     return result;
   }

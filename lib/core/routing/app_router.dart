@@ -5,6 +5,10 @@ import '../../presentation/screens/auth/forgot_password_screen.dart';
 import '../../presentation/screens/main_navigation_screen.dart';
 import '../../presentation/screens/chat/create_chat_room_screen.dart';
 import '../../presentation/screens/chat/chat_room_screen.dart';
+import '../../presentation/screens/tournament/tournament_list_screen.dart';
+import '../../presentation/screens/tournament/tournament_detail_screen.dart';
+import '../../presentation/screens/tournament/tournament_registration_screen.dart';
+import '../../data/models/tournament_model.dart';
 import '../../presentation/bloc/chat_messages/chat_rooms_bloc.dart';
 
 class AppRouter {
@@ -15,6 +19,9 @@ class AppRouter {
   static const String chatRooms = '/chat-rooms';
   static const String createChatRoom = '/create-chat-room';
   static const String chatRoom = '/chat-room';
+  static const String tournaments = '/tournaments';
+  static const String tournamentDetail = '/tournament-detail';
+  static const String tournamentRegistration = '/tournament-registration';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -49,6 +56,41 @@ class AppRouter {
           builder: (_) => Scaffold(
             body: Center(
               child: Text('Invalid chat room arguments'),
+            ),
+          ),
+        );
+      
+      case tournaments:
+        return MaterialPageRoute(builder: (_) => const TournamentListScreen());
+      
+      case tournamentDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final slug = args?['slug'] as String?;
+        if (slug != null) {
+          return MaterialPageRoute(
+            builder: (_) => TournamentDetailScreen(tournamentSlug: slug),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: Text('Invalid tournament slug'),
+            ),
+          ),
+        );
+      
+      case tournamentRegistration:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final tournament = args?['tournament'] as TournamentModel?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => TournamentRegistrationScreen(tournament: tournament),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: Text('Invalid tournament data for registration'),
             ),
           ),
         );

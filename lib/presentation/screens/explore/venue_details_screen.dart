@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:player_connect/core/di/injection.dart';
 import 'package:player_connect/presentation/bloc/venue_details/venue_details_bloc.dart';
+import 'package:player_connect/presentation/widgets/booking_summary_dialog.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:player_connect/data/models/location_details_model.dart';
 
 
 class VenueDetailsScreen extends StatefulWidget {
@@ -21,6 +23,8 @@ class ConsolidatedBooking {
   final TimeOfDay endTime;
   final Duration duration;
   final double price;
+  final String fieldId;
+  final double totalAmount;
 
   ConsolidatedBooking({
     required this.date,
@@ -28,7 +32,8 @@ class ConsolidatedBooking {
     required this.endTime,
     required this.duration,
     required this.price,
-  });
+    this.fieldId = '1', // Default field ID
+  }) : totalAmount = price; // totalAmount is same as price
 }
 
 class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
@@ -62,21 +67,42 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
 
   static const double _pricePerHalfHour = 10.0; // Hardcoded price for now
 
-  List<TimeOfDay> _generateTimeSlots(TimeOfDay open, TimeOfDay close) {
+  List<TimeOfDay> _generateTimeSlots(TimeOfDay open, TimeOfDay close, DateTime selectedDate) {
     List<TimeOfDay> slots = [];
     DateTime now = DateTime.now();
-    DateTime current = DateTime(now.year, now.month, now.day, open.hour, open.minute);
-    DateTime end = DateTime(now.year, now.month, now.day, close.hour, close.minute);
+    DateTime current = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, open.hour, open.minute);
+    DateTime end = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, close.hour, close.minute);
 
+    // Chỉ tạo slots cho giờ chẵn (không có phút lẻ)
     while (current.isBefore(end)) {
-      slots.add(TimeOfDay.fromDateTime(current));
-      current = current.add(const Duration(minutes: 30));
+      // Chỉ thêm slot nếu là giờ chẵn (minute = 0)
+      if (current.minute == 0) {
+        // Kiểm tra nếu ngày được chọn là hôm nay, chỉ cho phép giờ sau thời điểm hiện tại
+        bool isToday = selectedDate.year == now.year && 
+                      selectedDate.month == now.month && 
+                      selectedDate.day == now.day;
+        
+        if (!isToday || current.isAfter(now)) {
+          slots.add(TimeOfDay.fromDateTime(current));
+        }
+      }
+      current = current.add(const Duration(hours: 1)); // Tăng 1 giờ thay vì 30 phút
     }
     return slots;
   }
 
-  List<ConsolidatedBooking> _consolidateBookings() {
+  List<ConsolidatedBooking> _consolidateBookings(LocationDetailsModel? locationDetails) {
     List<ConsolidatedBooking> consolidatedBookings = [];
+
+    // Lấy fieldId thực từ LocationDetailsModel một cách an toàn
+    String fieldId = '1'; // Giá trị mặc định
+    if (locationDetails != null && 
+        locationDetails.fieldTypes != null && 
+        locationDetails.fieldTypes!.isNotEmpty &&
+        locationDetails.fieldTypes!.first.fields != null &&
+        locationDetails.fieldTypes!.first.fields!.isNotEmpty) {
+      fieldId = locationDetails.fieldTypes!.first.fields!.first.id.toString();
+    }
 
     _selectedTimeSlots.forEach((date, times) {
       if (times.isEmpty) return;
@@ -97,18 +123,18 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
         final previousDateTime = DateTime(date.year, date.month, date.day, previousTime.hour, previousTime.minute);
         final currentDateTime = DateTime(date.year, date.month, date.day, currentTime.hour, currentTime.minute);
 
-        // Check if current time is exactly 30 minutes after the previous time
-        if (currentDateTime.difference(previousDateTime).inMinutes == 30) {
+        // Check if current time is exactly 1 hour after the previous time
+        if (currentDateTime.difference(previousDateTime).inHours == 1) {
           currentGroup.add(currentTime);
         } else {
           // End of a continuous block, consolidate and start new group
           final startTime = currentGroup.first;
-          final endTime = TimeOfDay.fromDateTime(DateTime(date.year, date.month, date.day, currentGroup.last.hour, currentGroup.last.minute).add(const Duration(minutes: 30)));
+          final endTime = TimeOfDay.fromDateTime(DateTime(date.year, date.month, date.day, currentGroup.last.hour, currentGroup.last.minute).add(const Duration(hours: 1)));
           final startDateTime = DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute);
           final endDateTime = DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute);
           final duration = endDateTime.difference(startDateTime);
-          final numberOfHalfHours = duration.inMinutes / 30;
-          final price = numberOfHalfHours * _pricePerHalfHour;
+          final numberOfHours = duration.inHours;
+          final price = numberOfHours * (_pricePerHalfHour * 2); // Giá theo giờ
 
           consolidatedBookings.add(ConsolidatedBooking(
             date: date,
@@ -116,6 +142,7 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
             endTime: endTime,
             duration: duration,
             price: price,
+            fieldId: fieldId, // Sử dụng fieldId thực
           ));
           currentGroup = [currentTime];
         }
@@ -124,12 +151,12 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
 
       // Consolidate the last group
       final startTime = currentGroup.first;
-      final endTime = TimeOfDay.fromDateTime(DateTime(date.year, date.month, date.day, currentGroup.last.hour, currentGroup.last.minute).add(const Duration(minutes: 30)));
+      final endTime = TimeOfDay.fromDateTime(DateTime(date.year, date.month, date.day, currentGroup.last.hour, currentGroup.last.minute).add(const Duration(hours: 1)));
       final startDateTime = DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute);
       final endDateTime = DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute);
       final duration = endDateTime.difference(startDateTime);
-      final numberOfHalfHours = duration.inMinutes / 30;
-      final price = numberOfHalfHours * _pricePerHalfHour;
+      final numberOfHours = duration.inHours;
+      final price = numberOfHours * (_pricePerHalfHour * 2); // Giá theo giờ
 
       consolidatedBookings.add(ConsolidatedBooking(
         date: date,
@@ -137,130 +164,34 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
         endTime: endTime,
         duration: duration,
         price: price,
+        fieldId: fieldId, // Sử dụng fieldId thực
       ));
     });
 
     return consolidatedBookings;
   }
 
-  void _showBookingSummaryDialog(BuildContext context) {
-    final List<ConsolidatedBooking> bookings = _consolidateBookings();
-    print('Number of bookings: ${bookings.length}');
-    for (var i = 0; i < bookings.length; i++) {
-      final booking = bookings[i];
-      print('Booking ${i + 1}: Date: ${booking.date.toLocal().toString().split(' ')[0]}, Time: ${booking.startTime.format(context)} - ${booking.endTime.format(context)}, Duration: ${booking.duration.inMinutes} minutes, Price: ${booking.price.toStringAsFixed(2)}');
-    }
-    double totalAmount = 0.0;
-    for (var booking in bookings) {
-      totalAmount += booking.price;
-    }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            // Initialize PageController and listener inside StatefulBuilder
-            // to use setModalState for updating the dialog's UI
-            // final PageController dialogPageController = PageController(); // Removed
-            // int dialogCurrentPage = 0; // Removed
-
-            // dialogPageController.addListener(() { // Removed
-            //   if (dialogPageController.page != null) { // Removed
-            //     setModalState(() { // Removed
-            //       dialogCurrentPage = dialogPageController.page!.round(); // Removed
-            //       print('Dialog Current Page: $dialogCurrentPage, Dialog PageController.page: ${dialogPageController.page}'); // Debug print for dialog // Removed
-            //     }); // Removed
-            //   } // Removed
-            // }); // Removed
-
-            // Dispose the dialogPageController when the dialog is closed // Removed
-            // This is important to prevent memory leaks // Removed
-            // WidgetsBinding.instance.addPostFrameCallback((_) { // Removed
-            //   if (!Navigator.of(context).canPop()) { // Removed
-            //     dialogPageController.dispose(); // Removed
-            //   } // Removed
-            // }); // Removed
-
-            // We will manage dialogCurrentPage and dialogPageController within the CarouselSlider now
-            int dialogCurrentPage = 0; // Re-declare for local scope
-            final PageController dialogPageController = PageController(); // Re-declare for local scope
-
-            return AlertDialog(
-              title: const Text('Booking Summary'),
-              content: Container(
-                width: 300, // Fixed width for the AlertDialog content
-                child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [ 
-                    if (bookings.isEmpty)
-                      const Text('No bookings selected.')
-                    else if (bookings.length == 1)
-                      _buildBookingCard(bookings.first, context, 0)
-                    else
-                      Column(
-                        children: [
-                          SizedBox(
-                            height: 260, // Adjust height as needed
-                            child: CarouselSlider.builder(
-                              itemCount: bookings.length,
-                              itemBuilder: (BuildContext context, int index, int realIndex) {
-                                return _buildBookingCard(bookings[index], context, index);
-                              },
-                              options: CarouselOptions(
-                                height: 280,
-                                viewportFraction: 1.0,
-                                enableInfiniteScroll: false,
-                                onPageChanged: (index, reason) {
-                                  setModalState(() {
-                                    dialogCurrentPage = index;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          // Removed positional dots
-                        ],
-                      ),
-                    const Divider(),
-                    Text(
-                      'Total: ${totalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                ),
-              )),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close dialog
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement actual booking confirmation logic
-                    Navigator.pop(context); // Close dialog
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Booking confirmed!')),
-                    );
-                  },
-                  child: const Text('Confirm Booking'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
   void _showTimeSlotPicker(BuildContext context, DateTime day) {
+    // Kiểm tra nếu ngày được chọn đã qua
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime selectedDay = DateTime(day.year, day.month, day.day);
+    
+    if (selectedDay.isBefore(today)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể đặt lịch cho ngày đã qua'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     final TimeOfDay openingTime = TimeOfDay(hour: 9, minute: 0); // Hardcoded for now
     final TimeOfDay closingTime = TimeOfDay(hour: 17, minute: 0); // Hardcoded for now
-    final List<TimeOfDay> allTimeSlots = _generateTimeSlots(openingTime, closingTime);
+    final List<TimeOfDay> allTimeSlots = _generateTimeSlots(openingTime, closingTime, day);
 
     // Initialize tempSelectedTimes with existing selections for this day
     List<TimeOfDay> tempSelectedTimes = List.from(_selectedTimeSlots[day] ?? []);
@@ -362,7 +293,7 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
               ),
             SizedBox(height: 8),
             Text(
-              'Duration: ${booking.duration.inMinutes} minutes',
+              'Duration: ${booking.duration.inHours} hours',
             ),
             SizedBox(height: 8),
             Text(
@@ -373,6 +304,177 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
         ),
       ),
     ));
+  }
+
+  Widget _buildModernBookingCard(ConsolidatedBooking booking, BuildContext context, int index) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            Colors.grey.shade50,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header với số thứ tự
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Lượt ${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.sports_tennis,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Thông tin ngày
+            _buildInfoRow(
+              Icons.calendar_today,
+              'Ngày',
+              booking.date.toLocal().toString().split(' ')[0],
+              context,
+            ),
+            const SizedBox(height: 8),
+            // Thông tin thời gian
+            _buildInfoRow(
+              Icons.access_time,
+              'Thời gian',
+              '${booking.startTime.format(context)} - ${booking.endTime.format(context)}',
+              context,
+            ),
+            const SizedBox(height: 8),
+            // Thông tin thời lượng
+            _buildInfoRow(
+              Icons.timer,
+              'Thời lượng',
+              '${booking.duration.inHours} giờ',
+              context,
+            ),
+            const SizedBox(height: 12),
+            // Divider
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.grey.shade300,
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Giá tiền
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Giá:',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Text(
+                    '${booking.price.toStringAsFixed(0)} VND',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -462,16 +564,27 @@ class _VenueDetailsScreenState extends State<VenueDetailsScreen> {
                           Center(
                             child: ElevatedButton(
                               onPressed: () {
-                                if (_selectedTimeSlots.isNotEmpty) {
-                                  _showBookingSummaryDialog(context);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please select at least one date and time slot.'),
-                                    ),
-                                  );
-                                }
-                              },
+                            if (_selectedTimeSlots.isNotEmpty) {
+                              final List<ConsolidatedBooking> bookings = _consolidateBookings(details);
+                              double totalAmount = 0.0;
+                              for (var booking in bookings) {
+                                totalAmount += booking.price;
+                              }
+                              showDialog(
+                                context: context,
+                                builder: (context) => BookingSummaryDialog(
+                                  bookings: bookings,
+                                  totalAmount: totalAmount,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please select at least one date and time slot.'),
+                                ),
+                              );
+                            }
+                          },
                               child: const Text('Book Now'),
                             ),
                           ),

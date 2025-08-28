@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/user/user_bloc.dart';
+import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/user_model.dart';
+import '../booking_history/booking_history_screen.dart';
+import '../change_password/change_password_screen.dart';
+import '../privacy_security/privacy_security_screen.dart';
+import '../help_support/help_support_screen.dart';
+import '../about/about_screen.dart';
+import 'profile_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -9,78 +19,222 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  // Placeholder user data
-  final Map<String, dynamic> userData = {
-    'name': 'Alex Chen',
-    'email': 'alex.chen@example.com',
-    'avatar': 'AC',
-    'joinDate': 'March 2024',
-    'matchesPlayed': 47,
-    'winRate': 68,
-    'favoritesSport': 'Football',
-    'level': 'Intermediate',
-  };
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        try {
+          final userBloc = context.read<UserBloc>();
+          print('=== AccountScreen: Found UserBloc instance: $userBloc ===');
+          userBloc.add(LoadUserProfile());
+        } catch (e) {
+          print('=== AccountScreen: Error accessing UserBloc: $e ===');
+          // Handle the case where UserBloc is not available
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to load user profile. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
+  }
 
-  final List<Map<String, dynamic>> menuItems = [
+  void _navigateToBookingHistory() {
+    try {
+      final userBloc = context.read<UserBloc>();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BlocProvider.value(
+            value: userBloc,
+            child: const BookingHistoryScreen(),
+          ),
+        ),
+      );
+    } catch (e) {
+      print('=== AccountScreen: Error accessing UserBloc for booking history: $e ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to access booking history. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _navigateToChangePassword() {
+    try {
+      final userBloc = context.read<UserBloc>();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BlocProvider.value(
+            value: userBloc,
+            child: const ChangePasswordScreen(),
+          ),
+        ),
+      );
+    } catch (e) {
+      print('=== AccountScreen: Error accessing UserBloc for change password: $e ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to access change password. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _navigateToPrivacySecurity() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PrivacySecurityScreen(),
+      ),
+    );
+  }
+
+  void _navigateToHelpSupport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const HelpSupportScreen(),
+      ),
+    );
+  }
+
+  void _navigateToAbout() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AboutScreen(),
+      ),
+    );
+  }
+
+  void _navigateToProfile() {
+    try {
+      final userBloc = context.read<UserBloc>();
+      final authBloc = context.read<AuthBloc>();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MultiBlocProvider(
+            providers: [
+              BlocProvider.value(
+                value: userBloc,
+              ),
+              BlocProvider.value(
+                value: authBloc,
+              ),
+            ],
+            child: const ProfileScreen(),
+          ),
+        ),
+      );
+    } catch (e) {
+      print('=== AccountScreen: Error accessing BLoCs for profile: $e ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to access profile. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  List<Map<String, dynamic>> get menuItems => [
     {
-      'title': 'Edit Profile',
+      'title': 'Profile Information',
       'icon': Icons.person_outline,
-      'subtitle': 'Update your personal information',
+      'subtitle': 'View your personal information and account details',
+      'onTap': () => _navigateToProfile(),
     },
     {
-      'title': 'My Teams',
-      'icon': Icons.groups_outlined,
-      'subtitle': 'Manage your teams and memberships',
-    },
-    {
-      'title': 'Match History',
+      'title': 'Booking History',
       'icon': Icons.history,
-      'subtitle': 'View your past matches and stats',
+      'subtitle': 'View your booking history and past matches',
+      'onTap': () => _navigateToBookingHistory(),
     },
     {
-      'title': 'Wallet & Payments',
-      'icon': Icons.account_balance_wallet_outlined,
-      'subtitle': 'Manage your wallet and payment methods',
-    },
-    {
-      'title': 'Notifications',
-      'icon': Icons.notifications_outlined,
-      'subtitle': 'Configure your notification preferences',
+      'title': 'Change Password',
+      'icon': Icons.lock_outline,
+      'subtitle': 'Update your account password',
+      'onTap': () => _navigateToChangePassword(),
     },
     {
       'title': 'Privacy & Security',
       'icon': Icons.security_outlined,
       'subtitle': 'Manage your privacy and security settings',
+      'onTap': () => _navigateToPrivacySecurity(),
     },
     {
       'title': 'Help & Support',
       'icon': Icons.help_outline,
       'subtitle': 'Get help and contact support',
+      'onTap': () => _navigateToHelpSupport(),
     },
     {
       'title': 'About',
       'icon': Icons.info_outline,
       'subtitle': 'App version and legal information',
+      'onTap': () => _navigateToAbout(),
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(),
-          _buildProfileStats(),
-          _buildMenuItems(),
-          _buildLogoutSection(),
-        ],
-      ),
+    return BlocBuilder<UserBloc, UserState>(
+      builder: (context, state) {
+        if (state is UserLoading) {
+          return const Scaffold(
+            backgroundColor: AppTheme.scaffoldBackground,
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        if (state is UserError) {
+          return Scaffold(
+            backgroundColor: AppTheme.scaffoldBackground,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error loading profile',
+                    style: AppTheme.headingMedium,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<UserBloc>().add(LoadUserProfile());
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        final user = state is UserProfileLoaded ? state.user : null;
+        
+        return Scaffold(
+          backgroundColor: AppTheme.scaffoldBackground,
+          body: CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(user),
+              _buildProfileStats(user),
+              _buildMenuItems(),
+              _buildLogoutSection(),
+            ],
+          ),
+        );
+      },
     );
   }
 
   /// Builds the sliver app bar with profile info
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(UserModel? user) {
     return SliverAppBar(
       expandedHeight: 200,
       floating: false,
@@ -101,17 +255,22 @@ class _AccountScreenState extends State<AccountScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.white.withOpacity(0.2),
-                    child: Text(
-                      userData['avatar'],
-                      style: AppTheme.headingMedium.copyWith(
-                        color: Colors.white,
-                        fontSize: 28,
-                      ),
-                    ),
+                    backgroundImage: user?.profilePicture != null 
+                        ? NetworkImage(user!.profilePicture!) 
+                        : null,
+                    child: user?.profilePicture == null
+                        ? Text(
+                            user?.fullName?.substring(0, 2).toUpperCase() ?? 'U',
+                            style: AppTheme.headingMedium.copyWith(
+                              color: Colors.white,
+                              fontSize: 28,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: AppTheme.spacingM),
                   Text(
-                    userData['name'],
+                    user?.fullName ?? 'Unknown User',
                     style: AppTheme.headingMedium.copyWith(
                       color: Colors.white,
                       fontSize: 24,
@@ -119,7 +278,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   const SizedBox(height: AppTheme.spacingXS),
                   Text(
-                    userData['email'],
+                    user?.email ?? 'No email',
                     style: AppTheme.bodyMedium.copyWith(
                       color: Colors.white70,
                     ),
@@ -142,7 +301,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   /// Builds profile statistics
-  Widget _buildProfileStats() {
+  Widget _buildProfileStats(UserModel? user) {
     return SliverToBoxAdapter(
       child: Container(
         margin: const EdgeInsets.all(AppTheme.spacingL),
@@ -154,7 +313,7 @@ class _AccountScreenState extends State<AccountScreen> {
               Expanded(
                 child: _buildStatItem(
                   'Matches',
-                  userData['matchesPlayed'].toString(),
+                  user?.bookingCount?.toString() ?? '0',
                   Icons.sports_soccer,
                 ),
               ),
@@ -166,7 +325,7 @@ class _AccountScreenState extends State<AccountScreen> {
               Expanded(
                 child: _buildStatItem(
                   'Win Rate',
-                  '${userData['winRate']}%',
+                  '0%', // Win rate not available in current model
                   Icons.emoji_events,
                 ),
               ),
@@ -178,7 +337,7 @@ class _AccountScreenState extends State<AccountScreen> {
               Expanded(
                 child: _buildStatItem(
                   'Level',
-                  userData['level'],
+                  user?.memberLevel?.toString() ?? 'Beginner',
                   Icons.trending_up,
                 ),
               ),
@@ -263,7 +422,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 color: AppTheme.textSecondary,
                 size: AppTheme.iconSizeMedium,
               ),
-              onTap: () {
+              onTap: item['onTap'] ?? () {
                 // Handle menu item tap
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -287,7 +446,7 @@ class _AccountScreenState extends State<AccountScreen> {
         margin: const EdgeInsets.all(AppTheme.spacingL),
         child: ElevatedButton(
           onPressed: () {
-            _showLogoutDialog();
+            _showLogoutDialog(context);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red.shade50,
@@ -324,7 +483,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   /// Shows logout confirmation dialog
-  void _showLogoutDialog() {
+  void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -341,7 +500,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Navigate to login screen
+                // TODO: Implement logout functionality
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   '/login',
                   (route) => false,

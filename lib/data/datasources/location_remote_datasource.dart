@@ -151,16 +151,10 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      print('[DataSource] DIO ERROR Status Code: ${e.response?.statusCode}');
-      print('[DataSource] DIO ERROR Response Data: ${e.response?.data}'); // THIS IS THE MOST IMPORTANT LOG
-      print('[DataSource] DIO ERROR Message: ${e.message}');
-      print('[DataSource] DIO ERROR Type: ${e.type}');
-      print('[DataSource] DIO ERROR Request URL: ${e.requestOptions.uri}');
-      print('[DataSource] DIO ERROR Request Headers: ${e.requestOptions.headers}');
+      
       rethrow; // Re-throw the error so the repository and BLoC can handle it
     } catch (e, stackTrace) {
-      print('[DataSource] UNEXPECTED ERROR: $e');
-      print('[DataSource] StackTrace: $stackTrace');
+      
       throw DioException(
         requestOptions: RequestOptions(path: '${ApiConstants.baseUrl}/locations/map-search'),
         message: e.toString(),

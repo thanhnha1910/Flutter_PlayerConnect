@@ -63,8 +63,8 @@ class MessageBubble extends StatelessWidget {
   }
 
   bool _isOwnMessage() {
-    // Compare message userId with current user ID
-    return message.userId == currentUserId;
+
+    return message.userId != 0;
   }
 
   Widget _buildAvatar() {
