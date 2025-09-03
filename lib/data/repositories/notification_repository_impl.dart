@@ -52,7 +52,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Stream<NotificationModel> get notificationStream => _remoteDataSource.notificationStream;
+  Stream<List<NotificationModel>> get notificationStream => _remoteDataSource.notificationStream;
 
   @override
   Stream<int> get unreadCountStream => _remoteDataSource.unreadCountStream;

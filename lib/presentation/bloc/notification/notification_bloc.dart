@@ -33,17 +33,23 @@ class NotificationBloc extends Bloc<events.NotificationEvent, states.Notificatio
   
   void _setupNotificationListeners() {
     _notificationSubscription = _notificationRepository.notificationStream.listen(
-      (notification) {
-        add(events.NewNotificationReceived(notification.toJson()));
+      (notifications) {
+        // Handle list of notifications from WebSocket
+        for (final notification in notifications) {
+          add(events.NewNotificationReceived(notification.toJson()));
+        }
+      },
+      onError: (error) {
+        print('Error in notification stream: $error');
       },
     );
     
     _unreadCountSubscription = _notificationRepository.unreadCountStream.listen(
       (count) {
-        if (state is states.NotificationLoaded) {
-          final currentState = state as states.NotificationLoaded;
-          emit(currentState.copyWith(unreadCount: count));
-        }
+        add(const events.LoadUnreadCount());
+      },
+      onError: (error) {
+        print('Error in unread count stream: $error');
       },
     );
   }

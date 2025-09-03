@@ -12,7 +12,14 @@ import 'venue_details_screen.dart';
 import 'package:player_connect/core/di/injection.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+  final bool showDraftMatchBanner;
+  final String? draftMatchMessage;
+  
+  const ExploreScreen({
+    super.key,
+    this.showDraftMatchBanner = false,
+    this.draftMatchMessage,
+  });
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -70,13 +77,75 @@ class _ExploreScreenState extends State<ExploreScreen> {
             context.read<ExploreBloc>().add(const SearchNearbyFields());
           }
         },
-        child: BlocBuilder<ExploreBloc, ExploreState>(
-          builder: (context, state) {
-          if (state is ExploreLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+        child: Column(
+          children: [
+            // Draft Match Success Banner
+            if (widget.showDraftMatchBanner)
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade100, Colors.blue.shade100],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  border: Border(
+                    bottom: BorderSide(color: Colors.green.shade200),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade500,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Chốt Kèo Nháp',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.draftMatchMessage ?? 
+                            'Hãy chọn một sân cụ thể để chốt kèo cho trận đấu. Tất cả những người đã quan tâm sẽ nhận được thông báo.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Main Content
+            Expanded(
+              child: BlocBuilder<ExploreBloc, ExploreState>(
+                builder: (context, state) {
+                if (state is ExploreLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
           
           if (state is ExploreError) {
             return Center(
@@ -412,7 +481,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           return const Center(
             child: CircularProgressIndicator(),
           );
-          },
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

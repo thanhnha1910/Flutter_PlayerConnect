@@ -14,14 +14,22 @@ import 'messages/messages_screen.dart';
 import 'account/account_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int? initialTabIndex;
+  
+  const MainNavigationScreen({super.key, this.initialTabIndex});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialTabIndex ?? 0;
+  }
 
   final List<BottomNavigationBarItem> _navigationItems = [
     const BottomNavigationBarItem(

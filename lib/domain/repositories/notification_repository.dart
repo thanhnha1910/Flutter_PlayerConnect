@@ -18,7 +18,7 @@ abstract class NotificationRepository {
   
   Future<void> sendTestNotification();
   
-  Stream<NotificationModel> get notificationStream;
+  Stream<List<NotificationModel>> get notificationStream;
   
   Stream<int> get unreadCountStream;
   

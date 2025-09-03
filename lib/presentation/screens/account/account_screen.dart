@@ -10,6 +10,7 @@ import '../privacy_security/privacy_security_screen.dart';
 import '../help_support/help_support_screen.dart';
 import '../about/about_screen.dart';
 import 'profile_screen.dart';
+import '../invitation/invitation_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -110,6 +111,14 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
+  void _navigateToInvitations() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const InvitationScreen(),
+      ),
+    );
+  }
+
   void _navigateToProfile() {
     try {
       final userBloc = context.read<UserBloc>();
@@ -152,6 +161,12 @@ class _AccountScreenState extends State<AccountScreen> {
       'icon': Icons.history,
       'subtitle': 'View your booking history and past matches',
       'onTap': () => _navigateToBookingHistory(),
+    },
+    {
+      'title': 'Invitations & Requests',
+      'icon': Icons.mail_outline,
+      'subtitle': 'Manage team invitations and match requests',
+      'onTap': () => _navigateToInvitations(),
     },
     {
       'title': 'Change Password',

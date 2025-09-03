@@ -7,6 +7,7 @@ import '../../../data/repositories/booking_repository_impl.dart';
 import '../../../domain/repositories/booking_repository.dart';
 import '../../../core/di/injection.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/ai_recommendation/find_teammates_prompt.dart';
 
 class BookingReceiptScreen extends StatefulWidget {
   final String bookingId;
@@ -321,6 +322,12 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Find Teammates Prompt
+          FindTeammatesPrompt(
+            bookingId: booking.id.toString(),
           ),
           const SizedBox(height: 32),
           

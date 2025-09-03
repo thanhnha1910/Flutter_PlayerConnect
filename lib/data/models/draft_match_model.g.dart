@@ -9,6 +9,9 @@ part of 'draft_match_model.dart';
 DraftMatchModel _$DraftMatchModelFromJson(Map<String, dynamic> json) =>
     DraftMatchModel(
       id: (json['id'] as num).toInt(),
+      creatorUserId: (json['creatorUserId'] as num).toInt(),
+      creatorUserName: json['creatorUserName'] as String,
+      creatorAvatarUrl: json['creatorAvatarUrl'] as String?,
       sportType: json['sportType'] as String,
       locationDescription: json['locationDescription'] as String,
       estimatedStartTime: DateTime.parse(json['estimatedStartTime'] as String),
@@ -18,44 +21,59 @@ DraftMatchModel _$DraftMatchModelFromJson(Map<String, dynamic> json) =>
       requiredTags: (json['requiredTags'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
-      creator: UserModel.fromJson(json['creator'] as Map<String, dynamic>),
-      interestedUsers: (json['interestedUsers'] as List<dynamic>)
-          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      approvedUsers: (json['approvedUsers'] as List<dynamic>)
-          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      aiCompatibilityScore: (json['aiCompatibilityScore'] as num?)?.toDouble(),
-      hasUserExpressedInterest: json['hasUserExpressedInterest'] as bool?,
-      isUserApproved: json['isUserApproved'] as bool?,
-      isCreatedByUser: json['isCreatedByUser'] as bool?,
+      interestedUsersCount: (json['interestedUsersCount'] as num).toInt(),
+      interestedUserIds: (json['interestedUserIds'] as List<dynamic>)
+          .map((e) => (e as num).toInt())
+          .toList(),
+      pendingUsersCount: (json['pendingUsersCount'] as num).toInt(),
+      approvedUsersCount: (json['approvedUsersCount'] as num).toInt(),
+      userStatuses: (json['userStatuses'] as List<dynamic>)
+          .map((e) => e as Map<String, dynamic>)
+          .toList(),
+      currentUserInterested: json['currentUserInterested'] as bool?,
+      currentUserStatus: json['currentUserStatus'] as String?,
+      compatibilityScore: (json['compatibilityScore'] as num?)?.toDouble(),
+      explicitScore: (json['explicitScore'] as num?)?.toDouble(),
+      implicitScore: (json['implicitScore'] as num?)?.toDouble(),
+      baseCompatibilityScore: (json['baseCompatibilityScore'] as num?)
+          ?.toDouble(),
+      originalAIScore: (json['originalAIScore'] as num?)?.toDouble(),
+      scoreValidated: json['scoreValidated'] as bool?,
+      aiScoreUsed: json['aiScoreUsed'] as bool?,
     );
 
-Map<String, dynamic> _$DraftMatchModelToJson(
-  DraftMatchModel instance,
-) => <String, dynamic>{
-  'id': instance.id,
-  'sportType': instance.sportType,
-  'locationDescription': instance.locationDescription,
-  'estimatedStartTime': instance.estimatedStartTime.toIso8601String(),
-  'estimatedEndTime': instance.estimatedEndTime.toIso8601String(),
-  'slotsNeeded': instance.slotsNeeded,
-  'skillLevel': instance.skillLevel,
-  'requiredTags': instance.requiredTags,
-  'creator': instance.creator.toJson(),
-  'interestedUsers': instance.interestedUsers.map((e) => e.toJson()).toList(),
-  'approvedUsers': instance.approvedUsers.map((e) => e.toJson()).toList(),
-  'status': instance.status,
-  'createdAt': instance.createdAt.toIso8601String(),
-  'updatedAt': instance.updatedAt.toIso8601String(),
-  'aiCompatibilityScore': instance.aiCompatibilityScore,
-  'hasUserExpressedInterest': instance.hasUserExpressedInterest,
-  'isUserApproved': instance.isUserApproved,
-  'isCreatedByUser': instance.isCreatedByUser,
-};
+Map<String, dynamic> _$DraftMatchModelToJson(DraftMatchModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'creatorUserId': instance.creatorUserId,
+      'creatorUserName': instance.creatorUserName,
+      'creatorAvatarUrl': instance.creatorAvatarUrl,
+      'sportType': instance.sportType,
+      'locationDescription': instance.locationDescription,
+      'estimatedStartTime': instance.estimatedStartTime.toIso8601String(),
+      'estimatedEndTime': instance.estimatedEndTime.toIso8601String(),
+      'slotsNeeded': instance.slotsNeeded,
+      'skillLevel': instance.skillLevel,
+      'requiredTags': instance.requiredTags,
+      'status': instance.status,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'interestedUsersCount': instance.interestedUsersCount,
+      'interestedUserIds': instance.interestedUserIds,
+      'pendingUsersCount': instance.pendingUsersCount,
+      'approvedUsersCount': instance.approvedUsersCount,
+      'userStatuses': instance.userStatuses,
+      'currentUserInterested': instance.currentUserInterested,
+      'currentUserStatus': instance.currentUserStatus,
+      'compatibilityScore': instance.compatibilityScore,
+      'explicitScore': instance.explicitScore,
+      'implicitScore': instance.implicitScore,
+      'baseCompatibilityScore': instance.baseCompatibilityScore,
+      'originalAIScore': instance.originalAIScore,
+      'scoreValidated': instance.scoreValidated,
+      'aiScoreUsed': instance.aiScoreUsed,
+    };
 
 CreateDraftMatchRequest _$CreateDraftMatchRequestFromJson(
   Map<String, dynamic> json,

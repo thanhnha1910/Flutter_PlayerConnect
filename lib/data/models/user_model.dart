@@ -38,6 +38,8 @@ class UserModel extends Equatable {
   });
   
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Handle different response structures from backend
+    
     // Handle roles parsing - convert from object array to string array
     List<String> parsedRoles = [];
     if (json['roles'] != null) {
@@ -50,11 +52,24 @@ class UserModel extends Equatable {
         }
         return 'ROLE_USER'; // fallback
       }).toList();
+    } else {
+      // Default roles if not provided (for draft match request responses)
+      parsedRoles = ['ROLE_USER'];
     }
     
-    // Create a modified json map with parsed roles
+    // Create a modified json map with parsed roles and default values
     final modifiedJson = Map<String, dynamic>.from(json);
     modifiedJson['roles'] = parsedRoles;
+    
+    // Handle missing required fields for draft match request responses
+    modifiedJson['email'] = json['email'] ?? '';
+    modifiedJson['status'] = json['status'] ?? 'ACTIVE';
+    modifiedJson['hasCompletedProfile'] = json['hasCompletedProfile'] ?? true;
+    
+    // Map avatarUrl to profilePicture if present
+    if (json['avatarUrl'] != null && json['profilePicture'] == null) {
+      modifiedJson['profilePicture'] = json['avatarUrl'];
+    }
     
     return _$UserModelFromJson(modifiedJson);
   }
