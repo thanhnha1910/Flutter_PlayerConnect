@@ -102,7 +102,7 @@ class _PayPalWebViewHandlerState extends State<PayPalWebViewHandler> {
               });
 
               // Check for Flutter callback pages and extract JavaScript data
-              if (url.contains('192.168.6.156:1444/api/payment/flutter/')) {
+              if (url.contains('192.168.1.12:1444/api/payment/flutter/')) {
                 print(
                   'DEBUG: Flutter callback page detected, checking for JavaScript data',
                 );
@@ -168,7 +168,7 @@ class _PayPalWebViewHandlerState extends State<PayPalWebViewHandler> {
     print('DEBUG: Handling URL change: $url'); // Debug log
 
     // Check for Flutter HTTP callback success patterns
-    if (url.contains('192.168.6.156:1444/api/payment/flutter/success')) {
+    if (url.contains('192.168.1.12:1444/api/payment/flutter/success')) {
       print('DEBUG: Flutter HTTP success callback detected'); // Debug log
 
       // Extract parameters from URL
@@ -200,7 +200,7 @@ class _PayPalWebViewHandlerState extends State<PayPalWebViewHandler> {
     }
 
     // Check for Flutter HTTP callback error patterns
-    if (url.contains('192.168.6.156:1444/api/payment/flutter/error')) {
+    if (url.contains('192.168.1.12:1444/api/payment/flutter/error')) {
       print('DEBUG: Flutter HTTP error callback detected'); // Debug log
 
       try {

@@ -28,11 +28,20 @@ class DraftMatchActionLoading extends DraftMatchState {
 class DraftMatchListLoaded extends DraftMatchState {
   final List<DraftMatchModel> draftMatches;
   final String listType; // 'active', 'my', 'public'
+  final Set<int> processingMatchIds; // Track which matches are being processed
 
-  const DraftMatchListLoaded(this.draftMatches, this.listType);
+  const DraftMatchListLoaded(this.draftMatches, this.listType, {this.processingMatchIds = const {}});
 
   @override
-  List<Object> get props => [draftMatches, listType];
+  List<Object> get props => [draftMatches, listType, processingMatchIds];
+
+  // Helper method to check if a match is being processed
+  bool isMatchProcessing(int matchId) => processingMatchIds.contains(matchId);
+
+  // Helper method to create a copy with updated processing state
+  DraftMatchListLoaded copyWithProcessing(Set<int> newProcessingMatchIds) {
+    return DraftMatchListLoaded(draftMatches, listType, processingMatchIds: newProcessingMatchIds);
+  }
 }
 
 // Success state for single draft match operations
@@ -123,6 +132,16 @@ class DraftMatchConverted extends DraftMatchState {
 
   @override
   List<Object> get props => [draftMatch];
+}
+
+class DraftMatchConvertedSuccess extends DraftMatchState {
+  final String message;
+  final int draftMatchId;
+
+  const DraftMatchConvertedSuccess(this.message, this.draftMatchId);
+
+  @override
+  List<Object> get props => [message, draftMatchId];
 }
 
 class DraftMatchUpdated extends DraftMatchState {

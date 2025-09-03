@@ -22,6 +22,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     super.initState();
     _notificationBloc = getIt<NotificationBloc>();
     _notificationBloc.add(const LoadNotifications());
+    _notificationBloc.add(const InitializeNotificationSocket());
   }
 
   @override

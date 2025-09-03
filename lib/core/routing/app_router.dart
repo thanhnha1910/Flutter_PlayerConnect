@@ -32,7 +32,11 @@ class AppRouter {
       case forgotPassword:
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       case home:
-        return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
+        final args = settings.arguments as Map<String, dynamic>?;
+        final initialTabIndex = args?['initialTabIndex'] as int?;
+        return MaterialPageRoute(
+          builder: (_) => MainNavigationScreen(initialTabIndex: initialTabIndex),
+        );
       
       case createChatRoom:
         final args = settings.arguments as Map<String, dynamic>?;

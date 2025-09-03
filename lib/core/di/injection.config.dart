@@ -17,8 +17,13 @@ import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:player_connect/core/di/register_module.dart' as _i1040;
 import 'package:player_connect/core/network/api_client.dart' as _i62;
+import 'package:player_connect/core/providers/websocket_provider.dart' as _i82;
+import 'package:player_connect/core/services/ai_recommendation_service.dart'
+    as _i450;
+import 'package:player_connect/core/services/invitation_service.dart' as _i92;
 import 'package:player_connect/core/services/location_permission_service.dart'
     as _i187;
+import 'package:player_connect/core/services/websocket_service.dart' as _i655;
 import 'package:player_connect/core/storage/secure_storage.dart' as _i43;
 import 'package:player_connect/data/datasources/auth_remote_datasource.dart'
     as _i287;
@@ -30,6 +35,8 @@ import 'package:player_connect/data/datasources/chatbot_remote_datasource.dart'
     as _i43;
 import 'package:player_connect/data/datasources/community_remote_datasource.dart'
     as _i819;
+import 'package:player_connect/data/datasources/invitation_remote_datasource.dart'
+    as _i120;
 import 'package:player_connect/data/datasources/location_remote_datasource.dart'
     as _i1070;
 import 'package:player_connect/data/datasources/notification_remote_datasource.dart'
@@ -49,6 +56,8 @@ import 'package:player_connect/data/repositories/chatbot_repository_impl.dart'
     as _i278;
 import 'package:player_connect/data/repositories/community_repository_impl.dart'
     as _i496;
+import 'package:player_connect/data/repositories/invitation_repository_impl.dart'
+    as _i127;
 import 'package:player_connect/data/repositories/location_repository_impl.dart'
     as _i509;
 import 'package:player_connect/data/repositories/notification_repository_impl.dart'
@@ -67,6 +76,8 @@ import 'package:player_connect/domain/repositories/chatbot_repository.dart'
     as _i936;
 import 'package:player_connect/domain/repositories/community_repository.dart'
     as _i693;
+import 'package:player_connect/domain/repositories/invitation_repository.dart'
+    as _i229;
 import 'package:player_connect/domain/repositories/location_repository.dart'
     as _i339;
 import 'package:player_connect/domain/repositories/notification_repository.dart'
@@ -182,8 +193,19 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i187.LocationPermissionService(),
     );
     gh.lazySingleton<_i683.WebSocketClient>(() => _i683.WebSocketClient());
+    gh.lazySingleton<_i120.InvitationRemoteDataSource>(
+      () => _i120.InvitationRemoteDataSourceImpl(gh<_i361.Dio>()),
+    );
     gh.lazySingleton<_i43.SecureStorage>(
       () => _i43.SecureStorage(gh<_i558.FlutterSecureStorage>()),
+    );
+    gh.lazySingleton<_i229.InvitationRepository>(
+      () => _i127.InvitationRepositoryImpl(
+        gh<_i120.InvitationRemoteDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i92.InvitationService>(
+      () => _i92.InvitationService(gh<_i229.InvitationRepository>()),
     );
     gh.lazySingleton<_i62.ApiClient>(
       () => _i62.ApiClient(gh<_i361.Dio>(), gh<_i43.SecureStorage>()),
@@ -195,12 +217,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i700.ChatRemoteDataSourceImpl(
         client: gh<_i519.Client>(),
         baseUrl: gh<String>(),
-        secureStorage: gh<_i43.SecureStorage>(),
-      ),
-    );
-    gh.lazySingleton<_i550.NotificationRemoteDataSource>(
-      () => _i550.NotificationRemoteDataSourceImpl(
-        apiClient: gh<_i62.ApiClient>(),
         secureStorage: gh<_i43.SecureStorage>(),
       ),
     );
@@ -216,8 +232,14 @@ extension GetItInjectableX on _i174.GetIt {
       () =>
           _i819.CommunityRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
     );
+    gh.factory<_i655.WebSocketService>(
+      () => _i655.WebSocketService(gh<_i43.SecureStorage>()),
+    );
     gh.lazySingleton<_i43.ChatbotRemoteDataSource>(
       () => _i43.ChatbotRemoteDataSourceImpl(apiClient: gh<_i62.ApiClient>()),
+    );
+    gh.lazySingleton<_i450.AIRecommendationService>(
+      () => _i450.AIRecommendationService(gh<_i62.ApiClient>()),
     );
     gh.lazySingleton<_i959.GetUserTeamsUseCase>(
       () => _i959.GetUserTeamsUseCase(gh<_i533.TournamentRepository>()),
@@ -274,14 +296,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i285.UserBloc>(
       () => _i285.UserBloc(gh<_i779.UserRepository>()),
     );
-    gh.lazySingleton<_i67.NotificationRepository>(
-      () => _i246.NotificationRepositoryImpl(
-        remoteDataSource: gh<_i550.NotificationRemoteDataSource>(),
+    gh.lazySingleton<_i550.NotificationRemoteDataSource>(
+      () => _i550.NotificationRemoteDataSourceImpl(
+        apiClient: gh<_i62.ApiClient>(),
+        secureStorage: gh<_i43.SecureStorage>(),
+        webSocketService: gh<_i655.WebSocketService>(),
       ),
     );
     gh.lazySingleton<_i339.LocationRepository>(
       () => _i509.LocationRepositoryImpl(
         remoteDataSource: gh<_i1070.LocationRemoteDataSource>(),
+      ),
+    );
+    gh.factory<_i82.WebSocketProvider>(
+      () => _i82.WebSocketProvider(
+        webSocketService: gh<_i655.WebSocketService>(),
+        secureStorage: gh<_i43.SecureStorage>(),
       ),
     );
     gh.lazySingleton<_i693.CommunityRepository>(
@@ -368,9 +398,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i472.GoogleSignInUseCase>(
       () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.factory<_i667.NotificationBloc>(
-      () => _i667.NotificationBloc(gh<_i67.NotificationRepository>()),
-    );
     gh.factory<_i719.ConnectWebSocketUseCase>(
       () => _i719.ConnectWebSocketUseCase(gh<_i133.ChatRepository>()),
     );
@@ -398,6 +425,11 @@ extension GetItInjectableX on _i174.GetIt {
         createChatRoomUseCase: gh<_i708.CreateChatRoomUseCase>(),
         joinChatRoomUseCase: gh<_i847.JoinChatRoomUseCase>(),
         connectWebSocketUseCase: gh<_i719.ConnectWebSocketUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i67.NotificationRepository>(
+      () => _i246.NotificationRepositoryImpl(
+        remoteDataSource: gh<_i550.NotificationRemoteDataSource>(),
       ),
     );
     gh.factory<_i633.LocationBloc>(
@@ -466,6 +498,9 @@ extension GetItInjectableX on _i174.GetIt {
         replyToCommentUseCase: gh<_i801.ReplyToCommentUseCase>(),
         authBloc: gh<_i976.AuthBloc>(),
       ),
+    );
+    gh.factory<_i667.NotificationBloc>(
+      () => _i667.NotificationBloc(gh<_i67.NotificationRepository>()),
     );
     gh.factory<_i915.CommunityBloc>(
       () => registerModule.communityBloc(

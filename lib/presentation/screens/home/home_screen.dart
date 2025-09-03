@@ -11,6 +11,7 @@ import '../../../core/di/injection.dart';
 import '../community/community_screen.dart';
 import '../../bloc/community/community_bloc.dart';
 import '../draft_match/draft_match_list_screen.dart';
+import '../open_match/open_match_list_screen.dart';
 import '../../bloc/draft_match/draft_match_bloc.dart';
 import '../tournament/tournament_list_screen.dart';
 import '../../bloc/tournament/tournament_bloc.dart';
@@ -415,6 +416,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         create: (context) => getIt<DraftMatchBloc>(),
                         child: const DraftMatchListScreen(),
                       ),
+                    ),
+                  );
+                } else if (service['label'] == 'Find Match') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const OpenMatchListScreen(),
                     ),
                   );
                 } else if (service['label'] == 'Tournaments') {

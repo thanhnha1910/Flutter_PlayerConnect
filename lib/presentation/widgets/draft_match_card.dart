@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/draft_match_model.dart';
 
@@ -7,6 +8,12 @@ class DraftMatchCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onExpressInterest;
   final VoidCallback? onWithdrawInterest;
+  final Function(int userId)? onApproveUser;
+  final Function(int userId)? onRejectUser;
+  final VoidCallback? onViewInterestedUsers;
+  final VoidCallback? onConvertToMatch;
+  final int? currentUserId;
+  final bool isProcessing;
 
   const DraftMatchCard({
     super.key,
@@ -14,6 +21,12 @@ class DraftMatchCard extends StatelessWidget {
     this.onTap,
     this.onExpressInterest,
     this.onWithdrawInterest,
+    this.onApproveUser,
+    this.onRejectUser,
+    this.onViewInterestedUsers,
+    this.onConvertToMatch,
+    this.currentUserId,
+    this.isProcessing = false,
   });
 
   @override
@@ -81,11 +94,7 @@ class DraftMatchCard extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingS),
               Row(
                 children: [
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: AppTheme.textSecondary,
-                  ),
+                  Icon(Icons.schedule, size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: AppTheme.spacingXS),
                   Text(
                     _formatDateTime(draftMatch.estimatedStartTime),
@@ -98,11 +107,7 @@ class DraftMatchCard extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingS),
               Row(
                 children: [
-                  Icon(
-                    Icons.people,
-                    size: 16,
-                    color: AppTheme.textSecondary,
-                  ),
+                  Icon(Icons.people, size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: AppTheme.spacingXS),
                   Text(
                     '${draftMatch.approvedSlotsCount}/${draftMatch.slotsNeeded} players',
@@ -110,12 +115,28 @@ class DraftMatchCard extends StatelessWidget {
                       color: AppTheme.textSecondary,
                     ),
                   ),
+                  if (draftMatch.pendingUsersCount > 0) ...[
+                    const SizedBox(width: AppTheme.spacingS),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingS,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                      ),
+                      child: Text(
+                        '${draftMatch.pendingUsersCount} pending',
+                        style: AppTheme.bodySmall.copyWith(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                   const Spacer(),
-                  Icon(
-                    Icons.star,
-                    size: 16,
-                    color: AppTheme.textSecondary,
-                  ),
+                  Icon(Icons.star, size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: AppTheme.spacingXS),
                   Text(
                     draftMatch.skillLevelDisplay,
@@ -154,52 +175,213 @@ class DraftMatchCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 12,
-                    backgroundImage: draftMatch.creator.profilePicture != null
-                        ? NetworkImage(draftMatch.creator.profilePicture!)
-                        : null,
-                    child: draftMatch.creator.profilePicture == null
-                        ? Text(
-                            draftMatch.creator.fullName.isNotEmpty
-                                ? draftMatch.creator.fullName[0].toUpperCase()
-                                : 'U',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                    backgroundColor: _getSportColor().withOpacity(0.2),
+                    child: draftMatch.creatorAvatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              draftMatch.creatorAvatarUrl!,
+                              width: 24,
+                              height: 24,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to text avatar on error (including CORS)
+                                return Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: _getSportColor().withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      draftMatch.creatorUserName.isNotEmpty
+                                          ? draftMatch.creatorUserName[0].toUpperCase()
+                                          : 'U',
+                                      style: AppTheme.bodySmall.copyWith(
+                                        color: _getSportColor(),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           )
-                        : null,
+                        : Text(
+                            draftMatch.creatorUserName.isNotEmpty
+                                ? draftMatch.creatorUserName[0].toUpperCase()
+                                : 'U',
+                            style: AppTheme.bodySmall.copyWith(
+                              color: _getSportColor(),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                   const SizedBox(width: AppTheme.spacingS),
                   Expanded(
                     child: Text(
-                      'Created by ${draftMatch.creator.fullName}',
+                      'Created by ${draftMatch.creatorUserName}',
                       style: AppTheme.bodySmall.copyWith(
                         color: AppTheme.textSecondary,
                       ),
                     ),
                   ),
-                  if (draftMatch.hasUserExpressedInterest == true)
-                    TextButton(
-                      onPressed: onWithdrawInterest,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.errorColor,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppTheme.spacingM,
+                  if (_isCreator()) ...[
+                    if (draftMatch.pendingUsersCount > 0)
+                      TextButton(
+                        onPressed: onViewInterestedUsers,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                          ),
+                        ),
+                        child: Text('Review (${draftMatch.pendingUsersCount})'),
+                      ),
+                    if (_canConvertToMatch())
+                      TextButton(
+                        onPressed: onConvertToMatch,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue.shade600,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sports_soccer, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            const Text('Chuyển thành trận đấu thật'),
+                          ],
                         ),
                       ),
-                      child: const Text('Withdraw'),
-                    )
-                  else if (draftMatch.isCreatedByUser != true)
-                    TextButton(
-                      onPressed: onExpressInterest,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.primaryAccent,
+                  ] else ...[                    // Logic tương tự FE React:
+                    // canJoin = !isCreator && !isInterested && match.status === 'RECRUITING'
+                    // canLeave = !isCreator && isInterested && userStatus === 'APPROVED'
+                    // isPending = !isCreator && (isInterested && userStatus === 'PENDING')
+                    // isProcessing = đang xử lý request
+                    
+                    if (isProcessing)
+                      Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppTheme.spacingM,
+                          vertical: AppTheme.spacingS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Đang xử lý...',
+                              style: AppTheme.bodySmall.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (_isPending())
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingM,
+                          vertical: AppTheme.spacingS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Đang chờ duyệt',
+                              style: AppTheme.bodySmall.copyWith(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (_canLeave())
+                      TextButton(
+                        onPressed: isProcessing ? null : onWithdrawInterest,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.errorColor,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                          ),
+                          side: BorderSide(color: AppTheme.errorColor.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_remove, size: 16),
+                            const SizedBox(width: 4),
+                            const Text('Rút Khỏi Kèo'),
+                          ],
+                        ),
+                      )
+                    else if (_canJoin())
+                      TextButton(
+                        onPressed: isProcessing ? null : onExpressInterest,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: isProcessing ? Colors.grey : Colors.green.shade600,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_add, size: 16, color: Colors.white),
+                            const SizedBox(width: 4)
+                           
+                          ],
+                        ),
+                      )
+                    else if (draftMatch.status == 'FULL')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingM,
+                          vertical: AppTheme.spacingS,
+                        ),
+                        child: Text(
+                          'Kèo đã đủ người',
+                          style: AppTheme.bodySmall.copyWith(
+                            color: AppTheme.errorColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      child: const Text('Join'),
-                    ),
+                  ],
                 ],
               ),
             ],
@@ -258,18 +440,40 @@ class DraftMatchCard extends StatelessWidget {
     }
   }
 
+  bool _isCreator() {
+    if (currentUserId == null) return false;
+    return currentUserId == draftMatch.creatorUserId;
+  }
+
   String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = dateTime.difference(now);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ${dateTime.minute.toString().padLeft(2, '0')}m';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m';
-    } else {
-      return 'Now';
-    }
+    // Format like FE: "DD/MM/YYYY HH:mm"
+    final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
+    return formatter.format(dateTime);
+  }
+
+  // Helper methods tương tự logic FE React
+  bool _canJoin() {
+    // Ẩn nút Join để tránh hiển thị không nhất quán
+    return false;
+  }
+
+  bool _canLeave() {
+    return !_isCreator() && 
+           (draftMatch.currentUserInterested ?? false) && 
+           draftMatch.currentUserStatus == 'APPROVED';
+  }
+
+  bool _isPending() {
+    return !_isCreator() && 
+           (draftMatch.currentUserInterested ?? false) && 
+           draftMatch.currentUserStatus == 'PENDING';
+  }
+
+  bool _isMatchFull() {
+    return draftMatch.approvedUsersCount >= draftMatch.slotsNeeded;
+  }
+
+  bool _canConvertToMatch() {
+    return _isCreator() && _isMatchFull() && (draftMatch.status == 'RECRUITING' || draftMatch.status == 'FULL');
   }
 }
