@@ -5,7 +5,6 @@ import '../../core/error/failures.dart';
 import '../../domain/repositories/booking_repository.dart';
 import '../datasources/booking_remote_datasource.dart';
 import '../models/booking_model.dart';
-import '../models/booking_receipt_model.dart';
 import '../models/booking_request_model.dart';
 
 @LazySingleton(as: BookingRepository)

@@ -358,11 +358,6 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         matches = [];
       }
 
-      // Ensure matches is a list
-      if (matches is! List) {
-        matches = [];
-      }
-
       // Convert matches to DraftMatchModel list
       final draftMatches = matches
           .map((match) => DraftMatchModel.fromJson(match as Map<String, dynamic>))
@@ -415,11 +410,6 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         matches = [];
       }
 
-      // Ensure matches is a list
-      if (matches is! List) {
-        matches = [];
-      }
-
       // Convert matches to DraftMatchModel list
       final draftMatches = matches
           .map((match) => DraftMatchModel.fromJson(match as Map<String, dynamic>))
@@ -464,11 +454,6 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         // Direct array format
         matches = data;
       } else {
-        matches = [];
-      }
-
-      // Ensure matches is a list
-      if (matches is! List) {
         matches = [];
       }
 
@@ -630,11 +615,6 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         matches = [];
       }
 
-      // Ensure matches is a list
-      if (matches is! List) {
-        matches = [];
-      }
-
       // Convert matches to DraftMatchModel list
       final draftMatches = matches
           .map((match) => DraftMatchModel.fromJson(match as Map<String, dynamic>))
@@ -692,11 +672,6 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         // Direct array format
         matches = data;
       } else {
-        matches = [];
-      }
-
-      // Ensure matches is a list
-      if (matches is! List) {
         matches = [];
       }
 

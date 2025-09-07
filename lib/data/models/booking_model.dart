@@ -1,32 +1,38 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'booking_model.g.dart';
 
-@JsonSerializable(explicitToJson: true)
+@JsonSerializable()
 class BookingModel extends Equatable {
-  final int id;
-  final int fieldId;
-  final String fieldName;
-  final DateTime startTime;
-  final DateTime endTime;
-  final double totalPrice;
-  final String status; // 'pending', 'confirmed', 'cancelled', 'completed'
-  final String? notes;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
+  final String? id;
+  final int? fieldId;
+  @JsonKey(name: 'fromTime')
+  final DateTime? startTime;
+  @JsonKey(name: 'toTime')
+  final DateTime? endTime;
+  final String? status;
+  final String? customerName;
+  final String? customerPhone;
+  final num? basePrice;
+  final num? discountPercent;
+  final num? discountAmount;
+  final num? totalPrice;
+  final bool? booked;
 
   const BookingModel({
-    required this.id,
-    required this.fieldId,
-    required this.fieldName,
-    required this.startTime,
-    required this.endTime,
-    required this.totalPrice,
-    required this.status,
-    this.notes,
-    required this.createdAt,
-    this.updatedAt,
+    this.id,
+    this.fieldId,
+    this.startTime,
+    this.endTime,
+    this.status,
+    this.customerName,
+    this.customerPhone,
+    this.basePrice,
+    this.discountPercent,
+    this.discountAmount,
+    this.totalPrice,
+    this.booked,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) =>
@@ -34,75 +40,19 @@ class BookingModel extends Equatable {
 
   Map<String, dynamic> toJson() => _$BookingModelToJson(this);
 
-  Duration get duration => endTime.difference(startTime);
-
-  String get timeRange {
-    final start = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-    final end = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
-    return '$start - $end';
-  }
-
-  String get statusDisplay {
-    switch (status) {
-      case 'pending':
-        return 'Chờ xác nhận';
-      case 'confirmed':
-        return 'Đã xác nhận';
-      case 'cancelled':
-        return 'Đã hủy';
-      case 'completed':
-        return 'Hoàn thành';
-      default:
-        return 'Không xác định';
-    }
-  }
-
   @override
   List<Object?> get props => [
         id,
         fieldId,
-        fieldName,
         startTime,
         endTime,
-        totalPrice,
         status,
-        notes,
-        createdAt,
-        updatedAt,
-      ];
-}
-
-@JsonSerializable(explicitToJson: true)
-class TimeSlot extends Equatable {
-  final DateTime startTime;
-  final DateTime endTime;
-  final bool isAvailable;
-  final double pricePerHour;
-  final String? bookedBy;
-
-  const TimeSlot({
-    required this.startTime,
-    required this.endTime,
-    required this.isAvailable,
-    required this.pricePerHour,
-    this.bookedBy,
-  });
-
-  factory TimeSlot.fromJson(Map<String, dynamic> json) =>
-      _$TimeSlotFromJson(json);
-
-  Map<String, dynamic> toJson() => _$TimeSlotToJson(this);
-
-  String get timeDisplay {
-    return '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  List<Object?> get props => [
-        startTime,
-        endTime,
-        isAvailable,
-        pricePerHour,
-        bookedBy,
+        customerName,
+        customerPhone,
+        basePrice,
+        discountPercent,
+        discountAmount,
+        totalPrice,
+        booked,
       ];
 }

@@ -6,7 +6,6 @@ import '../../../data/models/tournament_model.dart';
 import '../../bloc/tournament/tournament_bloc.dart';
 import '../../bloc/tournament/tournament_event.dart';
 import '../../bloc/tournament/tournament_state.dart';
-import 'tournament_registration_screen.dart';
 
 class TournamentDetailScreen extends StatefulWidget {
   final String tournamentSlug;
@@ -163,6 +162,11 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                     const SizedBox(height: 16),
                     _buildPrizesCard(tournament),
                   ],
+                  if (tournament.participatingTeams != null &&
+                      tournament.participatingTeams!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildParticipatingTeamsCard(tournament),
+                  ],
                   const SizedBox(height: 100), // Space for floating button
                 ],
               ),
@@ -188,6 +192,52 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildParticipatingTeamsCard(TournamentModel tournament) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          'Participating Teams',
+          style: AppTheme.headingSmall.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        children: [
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: tournament.participatingTeams!.length,
+            itemBuilder: (context, index) {
+              final team = tournament.participatingTeams![index];
+              return ExpansionTile(
+                leading: team.logo != null
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(team.logo!),
+                      )
+                    : const CircleAvatar(
+                        child: Icon(Icons.group),
+                      ),
+                title: Text(team.name),
+                children: team.members?.map((member) {
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(member.profilePicture ?? ''),
+                        ),
+                        title: Text(member.username ?? 'No name'),
+                      );
+                    }).toList() ??
+                    [],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
   

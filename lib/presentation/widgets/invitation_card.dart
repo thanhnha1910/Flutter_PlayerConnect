@@ -10,15 +10,14 @@ class InvitationCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const InvitationCard({
-    Key? key,
+    super.key,
     this.invitation,
     this.draftMatchRequest,
     required this.isReceived,
     this.onAccept,
     this.onReject,
     this.onTap,
-  }) : assert(invitation != null || draftMatchRequest != null),
-       super(key: key);
+  }) : assert(invitation != null || draftMatchRequest != null);
 
   @override
   Widget build(BuildContext context) {

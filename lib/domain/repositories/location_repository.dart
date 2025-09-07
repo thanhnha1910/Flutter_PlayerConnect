@@ -6,6 +6,7 @@ import '../../data/models/location_map_model.dart';
 import '../../data/models/location_card_response.dart';
 import '../../data/models/sport_model.dart';
 import '../../data/models/booking_model.dart';
+import '../../data/models/timeslot_model.dart';
 
 abstract class LocationRepository {
   Future<Either<Failure, List<LocationMapModel>>> getLocations();
@@ -24,10 +25,6 @@ abstract class LocationRepository {
   Future<Either<Failure, List<SportModel>>> getActiveSports();
   Future<Either<Failure, List<SportModel>>> searchSportsByName(String name);
   Future<Either<Failure, LocationModel>> getLocationById(int id);
-  Future<Either<Failure, List<TimeSlot>>> getAvailableTimeSlots({
-    required int fieldId,
-    required DateTime date,
-  });
   Future<Either<Failure, BookingModel>> createBooking({
     required int fieldId,
     required DateTime startTime,

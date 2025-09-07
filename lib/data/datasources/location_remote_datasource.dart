@@ -5,6 +5,7 @@ import '../models/location_map_model.dart';
 import '../models/location_card_response.dart';
 import '../models/sport_model.dart';
 import '../models/booking_model.dart';
+import '../models/timeslot_model.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
 
@@ -27,10 +28,6 @@ abstract class LocationRemoteDataSource {
   Future<List<SportModel>> getActiveSports();
   Future<List<SportModel>> searchSportsByName(String name);
   Future<LocationModel> getLocationById(int id);
-  Future<List<TimeSlot>> getAvailableTimeSlots({
-    required int fieldId,
-    required DateTime date,
-  });
   Future<BookingModel> createBooking({
     required int fieldId,
     required DateTime startTime,
@@ -150,10 +147,10 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
           message: 'Failed to search locations',
         );
       }
-    } on DioException catch (e) {
+    } on DioException {
       
       rethrow; // Re-throw the error so the repository and BLoC can handle it
-    } catch (e, stackTrace) {
+    } catch (e) {
       
       throw DioException(
         requestOptions: RequestOptions(path: '${ApiConstants.baseUrl}/locations/map-search'),
@@ -300,38 +297,7 @@ class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
     }
   }
 
-  @override
-  Future<List<TimeSlot>> getAvailableTimeSlots({
-    required int fieldId,
-    required DateTime date,
-  }) async {
-    try {
-      final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final response = await apiClient.dio.get(
-        '${ApiConstants.baseUrl}/fields/$fieldId/bookings',
-        queryParameters: {'date': dateString},
-      );
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? response.data;
-        return data.map((json) => TimeSlot.fromJson(json)).toList();
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to load time slots',
-        );
-      }
-    } catch (e) {
-      if (e is DioException) {
-        rethrow;
-      }
-      throw DioException(
-        requestOptions: RequestOptions(path: '${ApiConstants.baseUrl}/fields/$fieldId/bookings'),
-        message: e.toString(),
-      );
-    }
-  }
+  
 
   @override
   Future<BookingModel> createBooking({

@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class ApiConstants {
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://192.168.1.12:1444/api';
+      return 'http://10.0.2.2:1444/api';
     } else if (Platform.isAndroid) {
-      return 'http://192.168.1.12:1444/api';
+      return 'http://10.0.2.2:1444/api';
     }
-    return 'http://192.168.1.12:1444/api';
+    return 'http://10.0.2.2:1444/api';
   }
 
   static String get aiServiceUrl {
     if (kIsWeb) {
-      return 'http://localhost:5002';
+      return 'http://10.0.2.2:5002';
     } else if (Platform.isAndroid) {
       return 'http://localhost:5002';
     } else if (Platform.isIOS) {

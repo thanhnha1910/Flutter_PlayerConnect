@@ -14,7 +14,7 @@ class NotificationSubscriptionProvider extends ChangeNotifier {
   StreamSubscription? _notificationSubscription;
   StreamSubscription? _unreadCountSubscription;
   
-  List<NotificationModel> _notifications = [];
+  final List<NotificationModel> _notifications = [];
   int _unreadCount = 0;
   String? _currentUserId;
   

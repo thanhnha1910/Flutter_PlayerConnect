@@ -241,6 +241,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i450.AIRecommendationService>(
       () => _i450.AIRecommendationService(gh<_i62.ApiClient>()),
     );
+    gh.lazySingleton<_i128.GetTournamentsUseCase>(
+      () => _i128.GetTournamentsUseCase(gh<_i533.TournamentRepository>()),
+    );
+    gh.lazySingleton<_i128.GetTournamentBySlugUseCase>(
+      () => _i128.GetTournamentBySlugUseCase(gh<_i533.TournamentRepository>()),
+    );
     gh.lazySingleton<_i959.GetUserTeamsUseCase>(
       () => _i959.GetUserTeamsUseCase(gh<_i533.TournamentRepository>()),
     );
@@ -258,12 +264,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i302.GetTournamentPublicReceiptUseCase(
         gh<_i533.TournamentRepository>(),
       ),
-    );
-    gh.lazySingleton<_i128.GetTournamentsUseCase>(
-      () => _i128.GetTournamentsUseCase(gh<_i533.TournamentRepository>()),
-    );
-    gh.lazySingleton<_i128.GetTournamentBySlugUseCase>(
-      () => _i128.GetTournamentBySlugUseCase(gh<_i533.TournamentRepository>()),
     );
     gh.lazySingleton<_i320.BookingRemoteDataSource>(
       () => _i320.BookingRemoteDataSourceImpl(gh<_i62.ApiClient>()),
@@ -334,20 +334,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i379.CreatePostUseCase>(
       () => _i379.CreatePostUseCase(gh<_i693.CommunityRepository>()),
     );
-    gh.lazySingleton<_i464.LikeCommentUseCase>(
-      () => _i464.LikeCommentUseCase(gh<_i693.CommunityRepository>()),
-    );
     gh.lazySingleton<_i552.GetCommentsUseCase>(
       () => _i552.GetCommentsUseCase(gh<_i693.CommunityRepository>()),
     );
-    gh.lazySingleton<_i250.ReplyCommentUseCase>(
-      () => _i250.ReplyCommentUseCase(gh<_i693.CommunityRepository>()),
+    gh.lazySingleton<_i419.GetPostsUseCase>(
+      () => _i419.GetPostsUseCase(gh<_i693.CommunityRepository>()),
+    );
+    gh.lazySingleton<_i464.LikeCommentUseCase>(
+      () => _i464.LikeCommentUseCase(gh<_i693.CommunityRepository>()),
     );
     gh.lazySingleton<_i533.LikePostUseCase>(
       () => _i533.LikePostUseCase(gh<_i693.CommunityRepository>()),
     );
-    gh.lazySingleton<_i419.GetPostsUseCase>(
-      () => _i419.GetPostsUseCase(gh<_i693.CommunityRepository>()),
+    gh.lazySingleton<_i250.ReplyCommentUseCase>(
+      () => _i250.ReplyCommentUseCase(gh<_i693.CommunityRepository>()),
     );
     gh.lazySingleton<_i801.ReplyToCommentUseCase>(
       () => _i801.ReplyToCommentUseCase(gh<_i693.CommunityRepository>()),
@@ -365,20 +365,20 @@ extension GetItInjectableX on _i174.GetIt {
         authRepository: gh<_i1012.AuthRepository>(),
       ),
     );
-    gh.lazySingleton<_i860.GetLocationsUseCase>(
-      () => _i860.GetLocationsUseCase(gh<_i339.LocationRepository>()),
+    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
+      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i767.GetLocationCardsUseCase>(
       () => _i767.GetLocationCardsUseCase(gh<_i339.LocationRepository>()),
     );
-    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
-      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
-    );
-    gh.lazySingleton<_i183.GetActiveSportsUseCase>(
-      () => _i183.GetActiveSportsUseCase(gh<_i339.LocationRepository>()),
-    );
     gh.lazySingleton<_i266.GetLocationDetailsUseCase>(
       () => _i266.GetLocationDetailsUseCase(gh<_i339.LocationRepository>()),
+    );
+    gh.lazySingleton<_i860.GetLocationsUseCase>(
+      () => _i860.GetLocationsUseCase(gh<_i339.LocationRepository>()),
+    );
+    gh.lazySingleton<_i245.GetVenueDetailsUseCase>(
+      () => _i245.GetVenueDetailsUseCase(gh<_i339.LocationRepository>()),
     );
     gh.lazySingleton<_i598.SearchLocationsUseCase>(
       () => _i598.SearchLocationsUseCase(gh<_i339.LocationRepository>()),
@@ -386,8 +386,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1066.ForgotPasswordUseCase>(
       () => _i1066.ForgotPasswordUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i199.RegisterUseCase>(
-      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i472.GoogleSignInUseCase>(
+      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
     );
     gh.lazySingleton<_i894.LoginUseCase>(
       () => _i894.LoginUseCase(gh<_i1012.AuthRepository>()),
@@ -395,29 +395,29 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i854.LogoutUseCase>(
       () => _i854.LogoutUseCase(gh<_i1012.AuthRepository>()),
     );
-    gh.lazySingleton<_i472.GoogleSignInUseCase>(
-      () => _i472.GoogleSignInUseCase(gh<_i1012.AuthRepository>()),
+    gh.lazySingleton<_i199.RegisterUseCase>(
+      () => _i199.RegisterUseCase(gh<_i1012.AuthRepository>()),
     );
     gh.factory<_i719.ConnectWebSocketUseCase>(
       () => _i719.ConnectWebSocketUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i312.SubscribeToRoomUseCase>(
-      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i847.JoinChatRoomUseCase>(
-      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
-    );
-    gh.factory<_i729.GetChatRoomsUseCase>(
-      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i708.CreateChatRoomUseCase>(
+      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i502.GetChatMessagesUseCase>(
       () => _i502.GetChatMessagesUseCase(gh<_i133.ChatRepository>()),
     );
-    gh.factory<_i708.CreateChatRoomUseCase>(
-      () => _i708.CreateChatRoomUseCase(gh<_i133.ChatRepository>()),
+    gh.factory<_i729.GetChatRoomsUseCase>(
+      () => _i729.GetChatRoomsUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i847.JoinChatRoomUseCase>(
+      () => _i847.JoinChatRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i1000.SendMessageUseCase>(
       () => _i1000.SendMessageUseCase(gh<_i133.ChatRepository>()),
+    );
+    gh.factory<_i312.SubscribeToRoomUseCase>(
+      () => _i312.SubscribeToRoomUseCase(gh<_i133.ChatRepository>()),
     );
     gh.factory<_i159.ChatRoomsBloc>(
       () => _i159.ChatRoomsBloc(

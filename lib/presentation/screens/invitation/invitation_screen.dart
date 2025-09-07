@@ -9,7 +9,7 @@ import '../../../core/di/injection.dart';
 import '../../../core/providers/websocket_provider.dart';
 
 class InvitationScreen extends StatefulWidget {
-  const InvitationScreen({Key? key}) : super(key: key);
+  const InvitationScreen({super.key});
 
   @override
   State<InvitationScreen> createState() => _InvitationScreenState();
@@ -147,13 +147,13 @@ class _InvitationScreenState extends State<InvitationScreen>
             (failure) =>
                 print('Error loading received invitations: ${failure.message}'),
             (response) => _receivedInvitations =
-                (response as InvitationListResponse).invitations,
+                (response).invitations,
           );
           results[1].fold(
             (failure) =>
                 print('Error loading sent invitations: ${failure.message}'),
             (response) => _sentInvitations =
-                (response as InvitationListResponse).invitations,
+                (response).invitations,
           );
         });
       }
@@ -176,13 +176,13 @@ class _InvitationScreenState extends State<InvitationScreen>
             (failure) =>
                 print('Error loading received requests: ${failure.message}'),
             (response) => _receivedRequests =
-                (response as DraftMatchRequestListResponse).requests,
+                (response).requests,
           );
           results[1].fold(
             (failure) =>
                 print('Error loading sent requests: ${failure.message}'),
             (response) => _sentRequests =
-                (response as DraftMatchRequestListResponse).requests,
+                (response).requests,
           );
         });
       }

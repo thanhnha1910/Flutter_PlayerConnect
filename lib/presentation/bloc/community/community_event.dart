@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:player_connect/data/models/post_models.dart';
-import 'package:player_connect/data/models/comment_model.dart';
 
 abstract class CommunityEvent extends Equatable {
   const CommunityEvent();

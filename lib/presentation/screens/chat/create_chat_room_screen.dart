@@ -12,7 +12,7 @@ import '../../widgets/loading_overlay.dart';
 class CreateChatRoomScreen extends StatefulWidget {
   final ChatRoomsBloc? chatRoomsBloc;
   
-  const CreateChatRoomScreen({Key? key, this.chatRoomsBloc}) : super(key: key);
+  const CreateChatRoomScreen({super.key, this.chatRoomsBloc});
 
   @override
   State<CreateChatRoomScreen> createState() => _CreateChatRoomScreenState();

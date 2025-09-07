@@ -41,6 +41,9 @@ FieldModel _$FieldModelFromJson(Map<String, dynamic> json) => FieldModel(
   hourlyRate: (json['hourlyRate'] as num?)?.toInt(),
   thumbnailUrl: json['thumbnailUrl'] as String?,
   imageGallery: json['imageGallery'] as String?,
+  bookings: (json['bookings'] as List<dynamic>?)
+      ?.map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$FieldModelToJson(FieldModel instance) =>
@@ -51,6 +54,7 @@ Map<String, dynamic> _$FieldModelToJson(FieldModel instance) =>
       'hourlyRate': instance.hourlyRate,
       'thumbnailUrl': instance.thumbnailUrl,
       'imageGallery': instance.imageGallery,
+      'bookings': instance.bookings?.map((e) => e.toJson()).toList(),
     };
 
 LocationDetailsModel _$LocationDetailsModelFromJson(

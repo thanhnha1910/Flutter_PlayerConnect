@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:injectable/injectable.dart';
 import '../models/notification_model.dart';
 import '../../core/network/api_client.dart';
@@ -169,7 +168,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<void> sendTestNotification() async {
     try {
       final userData = await _secureStorage.getUserData();
-      final userId = userData?['id'];
+      final userId = userData['id'];
 
       if (userId == null) {
         throw Exception('User not authenticated');
