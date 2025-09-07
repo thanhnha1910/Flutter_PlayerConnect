@@ -24,14 +24,55 @@ class OpenMatchCard extends StatefulWidget {
 
 class _OpenMatchCardState extends State<OpenMatchCard> {
   bool _isLoading = false;
+  late JoinStatus _currentJoinStatus;
   final InvitationRepository _invitationRepository =
       getIt<InvitationRepository>();
 
+  @override
+  void initState() {
+    super.initState();
+    _currentJoinStatus = widget.openMatch.currentUserJoinStatus;
+  }
+
+  @override
+  void didUpdateWidget(OpenMatchCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update local state when widget data changes
+    // But preserve REQUEST_PENDING state to prevent multiple requests
+    if (widget.openMatch.currentUserJoinStatus != oldWidget.openMatch.currentUserJoinStatus) {
+      // Only allow server to override if:
+      // 1. We're not in REQUEST_PENDING state, OR
+      // 2. Server confirms REQUEST_PENDING, OR  
+      // 3. Server says we're JOINED (request was approved)
+      if (_currentJoinStatus != JoinStatus.REQUEST_PENDING || 
+          widget.openMatch.currentUserJoinStatus == JoinStatus.REQUEST_PENDING ||
+          widget.openMatch.currentUserJoinStatus == JoinStatus.JOINED) {
+        setState(() {
+          _currentJoinStatus = widget.openMatch.currentUserJoinStatus;
+        });
+      }
+    }
+  }
+
   Future<void> _handleSendJoinRequest() async {
     if (_isLoading) return;
+    
+    // Prevent multiple requests - don't send if already pending
+    if (_currentJoinStatus == JoinStatus.REQUEST_PENDING) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Yêu cầu tham gia đã được gửi, vui lòng chờ duyệt!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
+    // Optimistic update - set status to pending immediately
+    final previousStatus = _currentJoinStatus;
     setState(() {
       _isLoading = true;
+      _currentJoinStatus = JoinStatus.REQUEST_PENDING;
     });
 
     try {
@@ -47,31 +88,65 @@ class _OpenMatchCardState extends State<OpenMatchCard> {
       result.fold(
         (failure) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Lỗi khi gửi yêu cầu: ${failure.message}'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            // Check if error is "Join request already sent" - treat as success
+            if (failure.message.contains('Join request already sent') || 
+                failure.message.contains('already sent for this match')) {
+              // Keep the optimistic update (already set to REQUEST_PENDING)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Yêu cầu tham gia đã được gửi trước đó!'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              // Don't refresh immediately to avoid overriding local state
+              // widget.onRefresh?.call();
+            } else {
+              // Revert optimistic update on actual failure
+              setState(() {
+                _currentJoinStatus = previousStatus;
+              });
+              // Parse and display user-friendly error message
+              String errorMessage = _parseErrorMessage(failure.message);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
         (success) {
           if (mounted) {
+            // Keep the optimistic update (already set to REQUEST_PENDING)
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Đã gửi yêu cầu tham gia!'),
                 backgroundColor: Colors.green,
               ),
             );
+            // Don't refresh immediately to preserve optimistic update
+        // The server might not have updated the status yet
+        // Delay refresh to allow server to update status
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted) {
             widget.onRefresh?.call();
+          }
+        });
           }
         },
       );
     } catch (e) {
       if (mounted) {
+        // Revert optimistic update on exception
+        setState(() {
+          _currentJoinStatus = previousStatus;
+        });
+        // Parse and display user-friendly error message
+        String errorMessage = _parseErrorMessage(e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi không mong đợi: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -114,11 +189,16 @@ class _OpenMatchCardState extends State<OpenMatchCard> {
     });
 
     try {
-      // Note: Leave functionality might need to be implemented differently
-      // For now, we'll keep the existing implementation
-      // TODO: Implement proper leave workflow through invitation system
-      throw UnimplementedError(
-        'Leave functionality needs to be implemented through invitation system',
+      // Call the leave open match API through invitation repository
+      final result = await getIt<InvitationRepository>().leaveOpenMatch(widget.openMatch.id);
+      
+      result.fold(
+        (failure) {
+          throw Exception(failure.message);
+        },
+        (_) {
+          // Success - UI will be updated via callback
+        },
       );
 
       if (mounted) {
@@ -146,6 +226,32 @@ class _OpenMatchCardState extends State<OpenMatchCard> {
         });
       }
     }
+  }
+
+  /// Parse error message from exception string to display user-friendly message
+  String _parseErrorMessage(String errorString) {
+    // Remove "Exception: " prefix if present
+    String cleanMessage = errorString.replaceFirst('Exception: ', '');
+    
+    // Handle specific error patterns
+    if (cleanMessage.contains('Join request already sent')) {
+      return 'Bạn đã gửi yêu cầu tham gia trận đấu này rồi';
+    }
+    if (cleanMessage.contains('Match is full')) {
+      return 'Trận đấu đã đủ người tham gia';
+    }
+    if (cleanMessage.contains('Network error')) {
+      return 'Lỗi kết nối mạng. Vui lòng thử lại';
+    }
+    if (cleanMessage.contains('TIMEOUT')) {
+      return 'Kết nối bị gián đoạn. Vui lòng thử lại';
+    }
+    if (cleanMessage.contains('CONNECTION_ERROR')) {
+      return 'Không thể kết nối đến máy chủ';
+    }
+    
+    // Return the clean message or a default error message
+    return cleanMessage.isNotEmpty ? cleanMessage : 'Đã xảy ra lỗi. Vui lòng thử lại';
   }
 
   Color _getSportColor() {
@@ -558,7 +664,7 @@ class _OpenMatchCardState extends State<OpenMatchCard> {
     }
 
     // Show button based on join status
-    switch (widget.openMatch.currentUserJoinStatus) {
+    switch (_currentJoinStatus) {
       case JoinStatus.NOT_JOINED:
         return SizedBox(
           width: double.infinity,

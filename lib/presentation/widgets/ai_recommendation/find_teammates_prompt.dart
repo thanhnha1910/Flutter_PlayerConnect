@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:player_connect/data/models/ai_recommendation_model.dart';
+import 'package:player_connect/data/models/booking_model.dart';
+import 'package:player_connect/data/models/open_match_model.dart';
 import 'package:player_connect/core/services/ai_recommendation_service.dart';
 import 'package:player_connect/core/di/injection.dart';
 import 'package:player_connect/presentation/widgets/ai_recommendation/recommendation_modal.dart';
+import 'package:player_connect/presentation/widgets/ai_recommendation/create_open_match_modal.dart';
 
 class FindTeammatesPrompt extends StatefulWidget {
   final String bookingId;
   final VoidCallback? onCreateOpenMatch;
+  final VoidCallback? onOpenMatchCreated;
+  final int? recommendedCount;
+  final bool isLoadingRecommendations;
+  final bool hasOpenMatch;
+  final String? openMatchId;
+  final List<dynamic> recommendedPlayers;
 
   const FindTeammatesPrompt({
     Key? key,
     required this.bookingId,
     this.onCreateOpenMatch,
+    this.onOpenMatchCreated,
+    this.recommendedCount,
+    this.isLoadingRecommendations = false,
+    this.hasOpenMatch = false,
+    this.openMatchId,
+    this.recommendedPlayers = const [],
   }) : super(key: key);
 
   @override
@@ -21,6 +36,24 @@ class FindTeammatesPrompt extends StatefulWidget {
 class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
   final AIRecommendationService _aiService = getIt<AIRecommendationService>();
   bool _isLoadingRecommendations = false;
+
+  String _getPromptText() {
+    if (widget.isLoadingRecommendations) {
+      return 'Đang tìm kiếm người chơi...';
+    }
+
+    // Check if we have recommendations data loaded
+    if (widget.recommendedPlayers.isNotEmpty) {
+      return 'AI đã tìm thấy ${widget.recommendedPlayers.length} người chơi phù hợp. Mời họ ngay!';
+    }
+
+    // If recommendedPlayers is empty but we have a count, use it (like FE does)
+    if (widget.recommendedCount != null && widget.recommendedCount! > 0) {
+      return 'AI đã tìm thấy ${widget.recommendedCount} người chơi phù hợp. Mời họ ngay!';
+    }
+
+    return 'Sử dụng AI để tìm những người chơi phù hợp với bạn';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,13 +86,12 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
                     children: [
                       Text(
                         'Tìm đồng đội',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Sử dụng AI để tìm những người chơi phù hợp với bạn',
+                        _getPromptText(),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -74,7 +106,11 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isLoadingRecommendations ? null : _showRecommendations,
+                    onPressed:
+                        (_isLoadingRecommendations ||
+                            widget.isLoadingRecommendations)
+                        ? null
+                        : _showRecommendations,
                     icon: _isLoadingRecommendations
                         ? const SizedBox(
                             width: 16,
@@ -82,7 +118,12 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.psychology),
-                    label: Text(_isLoadingRecommendations ? 'Đang tải...' : 'Xem Gợi Ý'),
+                    label: Text(
+                      (_isLoadingRecommendations ||
+                              widget.isLoadingRecommendations)
+                          ? 'Đang tải...'
+                          : 'Xem Gợi Ý & Gửi Lời Mời',
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: const BorderSide(color: Colors.blue),
@@ -117,8 +158,11 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
     });
 
     try {
-      final response = await _aiService.getTeammateRecommendations(widget.bookingId);
-      
+      // Use bookingId to get recommendations like FE does
+      final response = await _aiService.getTeammateRecommendations(
+        widget.bookingId,
+      );
+
       if (mounted) {
         setState(() {
           _isLoadingRecommendations = false;
@@ -131,6 +175,9 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
             recommendations: response.recommendedPlayers,
             bookingId: widget.bookingId,
             onClose: () => Navigator.of(context).pop(),
+            hasOpenMatch: widget.hasOpenMatch,
+            openMatchId: widget.openMatchId,
+            recommendedPlayers: widget.recommendedPlayers,
           ),
         );
       }
@@ -150,13 +197,29 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
     }
   }
 
-  void _createOpenMatch() {
-    if (widget.onCreateOpenMatch != null) {
-      widget.onCreateOpenMatch!();
-    } else {
-      // Default behavior - show dialog to create open match
-      _showCreateOpenMatchDialog();
-    }
+  Future<void> _createOpenMatch() async {
+    // Show CreateOpenMatchModal
+    showDialog(
+      context: context,
+      builder: (context) => CreateOpenMatchModal(
+        bookingDetails: BookingModel(
+          id: int.parse(widget.bookingId),
+          fieldId: 0,
+          fieldName: 'Sân đã đặt',
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(Duration(hours: 1)),
+          totalPrice: 0.0,
+          status: 'confirmed',
+          createdAt: DateTime.now(),
+        ),
+        onSuccess: (openMatch) {
+          // Notify parent to refresh booking data
+          if (widget.onOpenMatchCreated != null) {
+            widget.onOpenMatchCreated!();
+          }
+        },
+      ),
+    );
   }
 
   void _showCreateOpenMatchDialog() {
@@ -185,15 +248,27 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
   }
 
   Future<void> _createOpenMatchFromBooking() async {
+    // Check if Open Match already exists for this booking
+    if (widget.hasOpenMatch) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Open Match đã tồn tại cho booking này!'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       await _aiService.createOpenMatchFromBooking(
         bookingId: widget.bookingId,
-        title: 'Tìm đồng đội',
-        description: 'Tìm người chơi cùng',
-        maxPlayers: 4,
-        pricePerPlayer: 0.0,
+        slotsNeeded: 1, // Default 3 slots needed
+        requiredTags: [], // No specific tags required
+        sportType: 'BONG_DA',
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -201,14 +276,28 @@ class _FindTeammatesPromptState extends State<FindTeammatesPrompt> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Notify parent to refresh booking data
+        if (widget.onOpenMatchCreated != null) {
+          widget.onOpenMatchCreated!();
+        }
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Không thể tạo Open Match: ${e.toString()}';
+
+        // Handle specific error cases
+        if (e.toString().contains('409') ||
+            e.toString().contains('already exists')) {
+          errorMessage = 'Open Match đã tồn tại cho booking này!';
+        } else if (e.toString().contains('401')) {
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        } else if (e.toString().contains('403')) {
+          errorMessage = 'Bạn không có quyền tạo Open Match cho booking này.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Không thể tạo Open Match: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     }

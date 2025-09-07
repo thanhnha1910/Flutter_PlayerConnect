@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import '../../widgets/open_match_card.dart';
 import '../../../data/models/open_match_model.dart';
 import '../../../core/services/ai_recommendation_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/providers/websocket_provider.dart';
 
 class OpenMatchListScreen extends StatefulWidget {
   const OpenMatchListScreen({super.key});
@@ -15,14 +17,37 @@ class OpenMatchListScreen extends StatefulWidget {
 
 class _OpenMatchListScreenState extends State<OpenMatchListScreen> {
   final AIRecommendationService _aiService = getIt<AIRecommendationService>();
+  final WebSocketProvider _webSocketProvider = getIt<WebSocketProvider>();
   List<OpenMatchModel> _openMatches = [];
   bool _isLoading = true;
   String? _error;
+  StreamSubscription? _webSocketSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadOpenMatches();
+    _setupWebSocketSubscription();
+  }
+
+  @override
+  void dispose() {
+    _webSocketSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupWebSocketSubscription() {
+    // Listen for real-time updates from WebSocket
+    _webSocketSubscription = _webSocketProvider.notificationStream.listen((
+      notification,
+    ) {
+      if (notification['type'] == 'open_match_created' ||
+          notification['type'] == 'open_match_updated' ||
+          notification['type'] == 'open_match_deleted') {
+        // Refresh the matches list when there are updates
+        _refreshMatches();
+      }
+    });
   }
 
   Future<void> _loadOpenMatches() async {

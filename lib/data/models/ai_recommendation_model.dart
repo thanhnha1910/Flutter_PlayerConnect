@@ -27,17 +27,20 @@ class RecommendedPlayerModel {
 
   factory RecommendedPlayerModel.fromJson(Map<String, dynamic> json) {
     return RecommendedPlayerModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['userId'].toString(),
+      name: json['fullName'] as String? ?? '',
       avatar: json['avatar'] as String?,
-      email: json['email'] as String,
-      compatibilityScore: (json['compatibilityScore'] as num).toDouble(),
-      tags: List<String>.from(json['tags'] ?? []),
-      location: json['location'] as String?,
+      email: json['email'] as String? ?? '',
+      compatibilityScore:
+          (json['compatibilityScore'] as num?)?.toDouble() ?? 0.0,
+      tags: List<String>.from(
+        (json['explicitTags'] ?? []) + (json['implicitTags'] ?? []),
+      ),
+      location: json['address'] as String?,
       age: json['age'] as int?,
       skillLevel: json['skillLevel'] as String?,
-      isOnline: json['isOnline'] as bool? ?? false,
-      lastActive: json['lastActive'] != null 
+      isOnline: json['isDiscoverable'] as bool? ?? false,
+      lastActive: json['lastActive'] != null
           ? DateTime.parse(json['lastActive'] as String)
           : null,
     );
@@ -114,24 +117,29 @@ class OpenMatchModel {
     return OpenMatchModel(
       id: json['id'].toString(),
       title: json['fieldName'] as String? ?? 'Open Match',
-      description: json['requiredTags'] != null 
+      description: json['requiredTags'] != null
           ? 'Required tags: ${(json['requiredTags'] as List).join(', ')}'
           : 'Open match available',
       matchTime: DateTime.parse(json['startTime'] as String),
-      location: json['locationName'] as String? ?? json['locationAddress'] as String? ?? 'Unknown location',
+      location:
+          json['locationName'] as String? ??
+          json['locationAddress'] as String? ??
+          'Unknown location',
       fieldType: json['sportType'] as String? ?? 'Unknown',
-      maxPlayers: (json['slotsNeeded'] as int? ?? 1) + (json['currentParticipants'] as int? ?? 0),
+      maxPlayers:
+          (json['slotsNeeded'] as int? ?? 1) +
+          (json['currentParticipants'] as int? ?? 0),
       currentPlayers: json['currentParticipants'] as int? ?? 0,
       pricePerPlayer: 0.0, // Not provided in API response
       creatorId: json['creatorUserId'].toString(),
       creatorName: json['creatorUserName'] as String? ?? 'Unknown',
       creatorAvatar: json['creatorAvatarUrl'] as String?,
-      tags: json['requiredTags'] != null 
+      tags: json['requiredTags'] != null
           ? List<String>.from(json['requiredTags'])
           : [],
       status: (json['status'] as String? ?? 'OPEN').toLowerCase(),
       createdAt: DateTime.parse(json['createdAt'] as String),
-      joinedPlayerIds: json['participantIds'] != null 
+      joinedPlayerIds: json['participantIds'] != null
           ? List<String>.from(json['participantIds'].map((id) => id.toString()))
           : [],
       isPublic: true, // Assuming all open matches are public
@@ -192,15 +200,20 @@ class AIRecommendationResponse {
 
   factory AIRecommendationResponse.fromJson(Map<String, dynamic> json) {
     return AIRecommendationResponse(
-      recommendedPlayers: (json['recommendedPlayers'] as List<dynamic>? ?? [])
-          .map((player) => RecommendedPlayerModel.fromJson(player as Map<String, dynamic>))
+      recommendedPlayers: (json['recommendations'] as List<dynamic>? ?? [])
+          .map(
+            (player) =>
+                RecommendedPlayerModel.fromJson(player as Map<String, dynamic>),
+          )
           .toList(),
       suggestedMatches: (json['suggestedMatches'] as List<dynamic>? ?? [])
-          .map((match) => OpenMatchModel.fromJson(match as Map<String, dynamic>))
+          .map(
+            (match) => OpenMatchModel.fromJson(match as Map<String, dynamic>),
+          )
           .toList(),
       message: json['message'] as String?,
-      success: json['success'] as bool? ?? true,
-      timestamp: json['timestamp'] != null 
+      success: json['serviceAvailable'] as bool? ?? true,
+      timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'] as String)
           : DateTime.now(),
     );
@@ -208,15 +221,20 @@ class AIRecommendationResponse {
 
   Map<String, dynamic> toJson() {
     return {
-      'recommendedPlayers': recommendedPlayers.map((player) => player.toJson()).toList(),
-      'suggestedMatches': suggestedMatches.map((match) => match.toJson()).toList(),
+      'recommendedPlayers': recommendedPlayers
+          .map((player) => player.toJson())
+          .toList(),
+      'suggestedMatches': suggestedMatches
+          .map((match) => match.toJson())
+          .toList(),
       'message': message,
       'success': success,
       'timestamp': timestamp.toIso8601String(),
     };
   }
 
-  bool get hasRecommendations => recommendedPlayers.isNotEmpty || suggestedMatches.isNotEmpty;
+  bool get hasRecommendations =>
+      recommendedPlayers.isNotEmpty || suggestedMatches.isNotEmpty;
 }
 
 // Invitation model for sending invites to recommended players
@@ -250,7 +268,7 @@ class PlayerInvitationModel {
       message: json['message'] as String,
       status: json['status'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      respondedAt: json['respondedAt'] != null 
+      respondedAt: json['respondedAt'] != null
           ? DateTime.parse(json['respondedAt'] as String)
           : null,
     );

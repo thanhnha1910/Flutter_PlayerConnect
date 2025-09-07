@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'team_model.dart';
 
 part 'tournament_model.g.dart';
 
@@ -26,6 +27,8 @@ class TournamentModel extends Equatable {
   final String? rules;
   @JsonKey(name: 'prize')
   final int? prizes;
+  final List<TeamModel>? participatingTeams;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -39,6 +42,8 @@ class TournamentModel extends Equatable {
     required this.endDate,
     this.registrationDeadline,
     required this.maxTeams,
+        this.participatingTeams,
+
     this.currentTeams = 0,
     required this.registrationFee,
     required this.status,
@@ -71,6 +76,7 @@ class TournamentModel extends Equatable {
         location,
         rules,
         prizes,
+        participatingTeams,
         createdAt,
         updatedAt,
       ];
@@ -91,6 +97,8 @@ class TournamentModel extends Equatable {
     String? location,
     String? rules,
     int? prizes,
+        List<TeamModel>? participatingTeams,
+
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -108,6 +116,8 @@ class TournamentModel extends Equatable {
       registrationFee: registrationFee ?? this.registrationFee,
       status: status ?? this.status,
       location: location ?? this.location,
+            participatingTeams: participatingTeams ?? this.participatingTeams,
+
       rules: rules ?? this.rules,
       prizes: prizes ?? this.prizes,
       createdAt: createdAt ?? this.createdAt,

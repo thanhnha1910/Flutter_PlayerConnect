@@ -19,6 +19,9 @@ TournamentModel _$TournamentModelFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['registrationDeadline'] as String),
       maxTeams: (json['slots'] as num).toInt(),
+      participatingTeams: (json['participatingTeams'] as List<dynamic>?)
+          ?.map((e) => TeamModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
       currentTeams: (json['currentTeams'] as num?)?.toInt() ?? 0,
       registrationFee: (json['entryFee'] as num).toInt(),
       status: json['status'] as String,
@@ -48,6 +51,7 @@ Map<String, dynamic> _$TournamentModelToJson(TournamentModel instance) =>
       'status': instance.status,
       'rules': instance.rules,
       'prize': instance.prizes,
+      'participatingTeams': instance.participatingTeams,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

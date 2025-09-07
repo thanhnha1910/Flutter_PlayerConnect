@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
 import '../../data/models/ai_recommendation_model.dart';
 import '../../data/models/invitation_model.dart';
+import '../../data/models/unified_invitation_model.dart';
 import '../../domain/repositories/invitation_repository.dart';
 import '../error/failures.dart';
 
@@ -12,22 +13,26 @@ class InvitationService {
   InvitationService(this._invitationRepository);
 
   // Get user's sent invitations
-  Future<Either<Failure, InvitationListResponse>> getSentInvitations() async {
+  Future<Either<Failure, UnifiedInvitationListResponse>>
+  getSentInvitations() async {
     return await _invitationRepository.getSentInvitations();
   }
 
   // Get user's received invitations
-  Future<Either<Failure, InvitationListResponse>> getReceivedInvitations() async {
+  Future<Either<Failure, UnifiedInvitationListResponse>>
+  getReceivedInvitations() async {
     return await _invitationRepository.getReceivedInvitations();
   }
 
   // Get user's received draft match requests
-  Future<Either<Failure, DraftMatchRequestListResponse>> getReceivedDraftMatchRequests() async {
+  Future<Either<Failure, DraftMatchRequestListResponse>>
+  getReceivedDraftMatchRequests() async {
     return await _invitationRepository.getReceivedDraftMatchRequests();
   }
 
   // Get user's sent draft match requests
-  Future<Either<Failure, DraftMatchRequestListResponse>> getSentDraftMatchRequests() async {
+  Future<Either<Failure, DraftMatchRequestListResponse>>
+  getSentDraftMatchRequests() async {
     return await _invitationRepository.getSentDraftMatchRequests();
   }
 
@@ -37,54 +42,65 @@ class InvitationService {
     required String action, // "accept" or "reject"
     String? message,
   }) async {
-    final request = InvitationActionRequest(
-      action: action,
-      message: message,
+    final request = InvitationActionRequest(action: action, message: message);
+    return await _invitationRepository.respondToInvitation(
+      invitationId,
+      request,
     );
-    return await _invitationRepository.respondToInvitation(invitationId, request);
   }
 
   // Accept a draft match request
-  Future<Either<Failure, void>> acceptDraftMatchRequest(int draftMatchId, int userId) async {
-    return await _invitationRepository.acceptDraftMatchRequest(draftMatchId, userId);
+  Future<Either<Failure, void>> acceptDraftMatchRequest(
+    int draftMatchId,
+    int userId,
+  ) async {
+    return await _invitationRepository.acceptDraftMatchRequest(
+      draftMatchId,
+      userId,
+    );
   }
 
   // Reject a draft match request
-  Future<Either<Failure, void>> rejectDraftMatchRequest(int draftMatchId, int userId) async {
-    return await _invitationRepository.rejectDraftMatchRequest(draftMatchId, userId);
+  Future<Either<Failure, void>> rejectDraftMatchRequest(
+    int draftMatchId,
+    int userId,
+  ) async {
+    return await _invitationRepository.rejectDraftMatchRequest(
+      draftMatchId,
+      userId,
+    );
   }
 
   // Helper method to handle Either results and throw exceptions for UI
   Future<T> _handleResult<T>(Either<Failure, T> result) async {
-    return result.fold(
-      (failure) {
-        if (failure is ServerFailure) {
-          throw Exception(failure.message);
-        } else {
-          throw Exception('Network error occurred');
-        }
-      },
-      (success) => success,
-    );
+    return result.fold((failure) {
+      if (failure is ServerFailure) {
+        throw Exception(failure.message);
+      } else {
+        throw Exception('Network error occurred');
+      }
+    }, (success) => success);
   }
 
   // Convenience methods that throw exceptions for easier UI handling
-  Future<InvitationListResponse> getSentInvitationsOrThrow() async {
+  Future<UnifiedInvitationListResponse> getSentInvitationsOrThrow() async {
     final result = await getSentInvitations();
     return _handleResult(result);
   }
 
-  Future<InvitationListResponse> getReceivedInvitationsOrThrow() async {
+  Future<UnifiedInvitationListResponse> getReceivedInvitationsOrThrow() async {
     final result = await getReceivedInvitations();
     return _handleResult(result);
   }
 
-  Future<DraftMatchRequestListResponse> getReceivedDraftMatchRequestsOrThrow() async {
+  Future<DraftMatchRequestListResponse>
+  getReceivedDraftMatchRequestsOrThrow() async {
     final result = await getReceivedDraftMatchRequests();
     return _handleResult(result);
   }
 
-  Future<DraftMatchRequestListResponse> getSentDraftMatchRequestsOrThrow() async {
+  Future<DraftMatchRequestListResponse>
+  getSentDraftMatchRequestsOrThrow() async {
     final result = await getSentDraftMatchRequests();
     return _handleResult(result);
   }
@@ -102,12 +118,18 @@ class InvitationService {
     return _handleResult(result);
   }
 
-  Future<void> acceptDraftMatchRequestOrThrow(int draftMatchId, int userId) async {
+  Future<void> acceptDraftMatchRequestOrThrow(
+    int draftMatchId,
+    int userId,
+  ) async {
     final result = await acceptDraftMatchRequest(draftMatchId, userId);
     return _handleResult(result);
   }
 
-  Future<void> rejectDraftMatchRequestOrThrow(int draftMatchId, int userId) async {
+  Future<void> rejectDraftMatchRequestOrThrow(
+    int draftMatchId,
+    int userId,
+  ) async {
     final result = await rejectDraftMatchRequest(draftMatchId, userId);
     return _handleResult(result);
   }

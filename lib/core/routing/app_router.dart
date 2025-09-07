@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/auth/forgot_password_screen.dart';
@@ -8,8 +9,11 @@ import '../../presentation/screens/chat/chat_room_screen.dart';
 import '../../presentation/screens/tournament/tournament_list_screen.dart';
 import '../../presentation/screens/tournament/tournament_detail_screen.dart';
 import '../../presentation/screens/tournament/tournament_registration_screen.dart';
+import '../../presentation/screens/onboarding/onboarding_screen.dart';
 import '../../data/models/tournament_model.dart';
 import '../../presentation/bloc/chat_messages/chat_rooms_bloc.dart';
+import '../../presentation/bloc/onboarding/onboarding_bloc.dart';
+import '../di/injection.dart';
 
 class AppRouter {
   static const String login = '/login';
@@ -22,6 +26,7 @@ class AppRouter {
   static const String tournaments = '/tournaments';
   static const String tournamentDetail = '/tournament-detail';
   static const String tournamentRegistration = '/tournament-registration';
+  static const String onboarding = '/onboarding';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -96,6 +101,14 @@ class AppRouter {
             body: Center(
               child: Text('Invalid tournament data for registration'),
             ),
+          ),
+        );
+      
+      case onboarding:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => getIt<OnboardingBloc>(),
+            child: const OnboardingScreen(),
           ),
         );
       default:

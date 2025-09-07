@@ -5,6 +5,7 @@ import '../../core/error/failures.dart';
 import '../../domain/repositories/invitation_repository.dart';
 import '../datasources/invitation_remote_datasource.dart';
 import '../models/invitation_model.dart';
+import '../models/unified_invitation_model.dart';
 import '../models/open_match_join_request_model.dart';
 
 @LazySingleton(as: InvitationRepository)
@@ -14,10 +15,8 @@ class InvitationRepositoryImpl implements InvitationRepository {
   InvitationRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Either<Failure, InvitationListResponse>> getReceivedInvitations({
-    int page = 0,
-    int size = 10,
-  }) async {
+  Future<Either<Failure, UnifiedInvitationListResponse>>
+  getReceivedInvitations({int page = 0, int size = 10}) async {
     try {
       final result = await remoteDataSource.getReceivedInvitations(
         page: page,
@@ -32,12 +31,48 @@ class InvitationRepositoryImpl implements InvitationRepository {
   }
 
   @override
-  Future<Either<Failure, InvitationListResponse>> getSentInvitations({
+  Future<Either<Failure, UnifiedInvitationListResponse>> getSentInvitations({
     int page = 0,
     int size = 10,
   }) async {
     try {
       final result = await remoteDataSource.getSentInvitations(
+        page: page,
+        size: size,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error occurred'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, InvitationListResponse>> getReceivedInvitationsLegacy({
+    int page = 0,
+    int size = 10,
+  }) async {
+    try {
+      final result = await remoteDataSource.getReceivedInvitationsLegacy(
+        page: page,
+        size: size,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error occurred'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, InvitationListResponse>> getSentInvitationsLegacy({
+    int page = 0,
+    int size = 10,
+  }) async {
+    try {
+      final result = await remoteDataSource.getSentInvitationsLegacy(
         page: page,
         size: size,
       );
@@ -193,6 +228,18 @@ class InvitationRepositoryImpl implements InvitationRepository {
   ) async {
     try {
       await remoteDataSource.rejectOpenMatchJoinRequest(requestId);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error occurred'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> leaveOpenMatch(int openMatchId) async {
+    try {
+      await remoteDataSource.leaveOpenMatch(openMatchId);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
