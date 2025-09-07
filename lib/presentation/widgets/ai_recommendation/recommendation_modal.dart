@@ -9,11 +9,11 @@ class RecommendationModal extends StatefulWidget {
   final VoidCallback onClose;
 
   const RecommendationModal({
-    Key? key,
+    super.key,
     required this.recommendations,
     required this.bookingId,
     required this.onClose,
-  }) : super(key: key);
+  });
 
   @override
   State<RecommendationModal> createState() => _RecommendationModalState();

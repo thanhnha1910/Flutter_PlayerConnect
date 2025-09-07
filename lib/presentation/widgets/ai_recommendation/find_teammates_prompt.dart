@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:player_connect/data/models/ai_recommendation_model.dart';
 import 'package:player_connect/core/services/ai_recommendation_service.dart';
 import 'package:player_connect/core/di/injection.dart';
 import 'package:player_connect/presentation/widgets/ai_recommendation/recommendation_modal.dart';
@@ -9,10 +8,10 @@ class FindTeammatesPrompt extends StatefulWidget {
   final VoidCallback? onCreateOpenMatch;
 
   const FindTeammatesPrompt({
-    Key? key,
+    super.key,
     required this.bookingId,
     this.onCreateOpenMatch,
-  }) : super(key: key);
+  });
 
   @override
   State<FindTeammatesPrompt> createState() => _FindTeammatesPromptState();

@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/booking_model.dart';
 import '../../../data/models/booking_receipt_model.dart';
-import '../../../data/repositories/booking_repository_impl.dart';
 import '../../../domain/repositories/booking_repository.dart';
 import '../../../core/di/injection.dart';
-import '../../widgets/custom_button.dart';
 import '../../widgets/ai_recommendation/find_teammates_prompt.dart';
 
 class BookingReceiptScreen extends StatefulWidget {
   final String bookingId;
 
   const BookingReceiptScreen({
-    Key? key,
+    super.key,
     required this.bookingId,
-  }) : super(key: key);
+  });
 
   @override
   State<BookingReceiptScreen> createState() => _BookingReceiptScreenState();
@@ -206,7 +202,7 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          ...batchBooking.bookings.map((booking) => _buildBookingCard(booking)).toList(),
+          ...batchBooking.bookings.map((booking) => _buildBookingCard(booking)),
           
           const SizedBox(height: 32),
           

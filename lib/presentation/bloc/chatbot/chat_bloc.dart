@@ -3,7 +3,6 @@ import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../../domain/usecases/send_chatbot_message_usecase.dart';
 import '../../../data/models/chat_message_model.dart';
-import '../../../data/models/chatbot_models.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 

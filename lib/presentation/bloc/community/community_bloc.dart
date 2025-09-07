@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
 import 'package:player_connect/data/models/comment_model.dart';
 import 'package:player_connect/domain/usecases/community/add_comment_usecase.dart';
 import 'package:player_connect/domain/usecases/community/get_comments_usecase.dart';

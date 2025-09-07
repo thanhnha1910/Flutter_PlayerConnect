@@ -336,9 +336,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
             print('✅ Format: Nested data.data as array');
           } else {
             // Fallback: try to find any array in the response
-            final possibleArrays = data.values.where((value) => value is List).toList();
+            final possibleArrays = data.values.whereType<List>().toList();
             if (possibleArrays.isNotEmpty) {
-              members = possibleArrays.first as List<dynamic>;
+              members = possibleArrays.first;
               print('✅ Format: Found array in response values');
             } else {
               members = [];

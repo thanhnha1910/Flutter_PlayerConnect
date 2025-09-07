@@ -14,7 +14,6 @@ class VenueDetailsBloc extends Bloc<VenueDetailsEvent, VenueDetailsState> {
   VenueDetailsBloc(this.getVenueDetailsUseCase) : super(VenueDetailsInitial()) {
     on<FetchVenueDetails>((event, emit) async {
       emit(VenueDetailsLoading());
-      print("Making a request with slug: ${event.slug}");
       final failureOrDetails = await getVenueDetailsUseCase(event.slug);
       failureOrDetails.fold(
         (failure) => emit(VenueDetailsError("Failed to fetch venue details")),

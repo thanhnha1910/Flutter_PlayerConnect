@@ -275,7 +275,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         : null,
                     child: user?.profilePicture == null
                         ? Text(
-                            user?.fullName?.substring(0, 2).toUpperCase() ?? 'U',
+                            user?.fullName.substring(0, 2).toUpperCase() ?? 'U',
                             style: AppTheme.headingMedium.copyWith(
                               color: Colors.white,
                               fontSize: 28,

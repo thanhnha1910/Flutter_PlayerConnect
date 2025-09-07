@@ -4,7 +4,6 @@ import 'package:player_connect/data/models/comment_model.dart';
 import 'package:player_connect/presentation/bloc/community/community_bloc.dart';
 import 'package:player_connect/presentation/bloc/community/community_event.dart';
 import 'package:player_connect/presentation/bloc/community/community_state.dart';
-import 'package:player_connect/presentation/widgets/custom_button.dart';
 import 'package:player_connect/presentation/widgets/custom_text_field.dart';
 
 class CommentSection extends StatefulWidget {

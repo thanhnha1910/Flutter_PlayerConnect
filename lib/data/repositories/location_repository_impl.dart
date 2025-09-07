@@ -9,6 +9,7 @@ import '../models/location_map_model.dart';
 import '../models/location_card_response.dart';
 import '../models/sport_model.dart';
 import '../models/booking_model.dart';
+import '../models/timeslot_model.dart';
 import '../datasources/location_remote_datasource.dart';
 
 @LazySingleton(as: LocationRepository)
@@ -141,23 +142,7 @@ class LocationRepositoryImpl implements LocationRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, List<TimeSlot>>> getAvailableTimeSlots({
-    required int fieldId,
-    required DateTime date,
-  }) async {
-    try {
-      final timeSlots = await remoteDataSource.getAvailableTimeSlots(
-        fieldId: fieldId,
-        date: date,
-      );
-      return Right(timeSlots);
-    } on DioException catch (e) {
-      return Left(ServerFailure(_mapDioErrorToMessage(e)));
-    } catch (e) {
-      return Left(ServerFailure('Đã xảy ra lỗi không xác định'));
-    }
-  }
+  
 
   @override
   Future<Either<Failure, BookingModel>> createBooking({

@@ -43,7 +43,7 @@ class WebSocketService {
       final userData = await _secureStorage.getUserData();
       final token = await _secureStorage.getToken();
       
-      if (userData == null || token == null) {
+      if (token == null) {
         throw Exception('User not authenticated');
       }
       
@@ -123,7 +123,7 @@ class WebSocketService {
   
   Future<void> _subscribeToUserNotifications() async {
     final userData = await _secureStorage.getUserData();
-    final userId = userData?['id'];
+    final userId = userData['id'];
     
     if (userId == null) {
       print('❌ Cannot subscribe: User ID not found');

@@ -6,8 +6,6 @@ import '../../../data/models/tournament_model.dart';
 import '../../bloc/tournament/tournament_bloc.dart';
 import '../../bloc/tournament/tournament_event.dart';
 import '../../bloc/tournament/tournament_state.dart';
-import 'tournament_detail_screen.dart';
-import '../../../core/di/injection.dart';
 
 class TournamentListScreen extends StatefulWidget {
   const TournamentListScreen({super.key});

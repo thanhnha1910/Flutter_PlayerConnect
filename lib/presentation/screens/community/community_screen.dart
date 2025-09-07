@@ -4,7 +4,6 @@ import 'package:player_connect/data/models/post_models.dart';
 import 'package:player_connect/presentation/bloc/community/community_bloc.dart';
 import 'package:player_connect/presentation/bloc/community/community_event.dart';
 import 'package:player_connect/presentation/bloc/community/community_state.dart';
-import 'package:player_connect/presentation/widgets/post_card.dart';
 import 'package:player_connect/presentation/screens/community/create_post_screen.dart';
 
 import '../../../core/di/injection.dart';

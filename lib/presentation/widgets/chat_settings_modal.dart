@@ -12,13 +12,13 @@ class ChatSettingsModal extends StatefulWidget {
   final Function(List<dynamic>)? onMembersUpdated;
 
   const ChatSettingsModal({
-    Key? key,
+    super.key,
     required this.roomId,
     required this.roomName,
     this.onChatDeleted,
     this.onLeftRoom,
     this.onMembersUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatSettingsModal> createState() => _ChatSettingsModalState();
@@ -34,7 +34,7 @@ class _ChatSettingsModalState extends State<ChatSettingsModal>
   List<dynamic> _filteredMembers = [];
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isSearchingUsers = false;
   bool _isCreator = false;
   bool _isAdmin = false;
@@ -115,7 +115,7 @@ class _ChatSettingsModalState extends State<ChatSettingsModal>
     try {
       final storage = getIt<SecureStorage>();
       final userData = await storage.getUserData();
-      final userId = userData?['userId']?.toString();
+      final userId = userData['userId']?.toString();
       
       setState(() {
         _currentUserId = userId;
@@ -311,7 +311,7 @@ class _ChatSettingsModalState extends State<ChatSettingsModal>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width * 0.9,
         height: MediaQuery.of(context).size.height * 0.8,
         child: Column(
@@ -664,7 +664,7 @@ class _ChatSettingsModalState extends State<ChatSettingsModal>
       
       await chatDataSource.removeMemberFromChatRoom(
         widget.roomId, 
-        memberUserId!
+        memberUserId
       );
       
       setState(() {

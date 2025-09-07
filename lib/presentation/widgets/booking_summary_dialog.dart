@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:player_connect/presentation/screens/explore/venue_details_screen.dart'; // Import ConsolidatedBooking
 import '../../data/models/booking_request_model.dart';
-import '../../data/repositories/booking_repository_impl.dart';
 import '../../domain/repositories/booking_repository.dart';
 import '../../core/di/injection.dart';
 import '../screens/booking_receipt/booking_receipt_screen.dart';
@@ -15,10 +13,10 @@ class BookingSummaryDialog extends StatefulWidget {
   final double totalAmount;
 
   const BookingSummaryDialog({
-    Key? key,
+    super.key,
     required this.bookings,
     required this.totalAmount,
-  }) : super(key: key);
+  });
 
   @override
   State<BookingSummaryDialog> createState() => _BookingSummaryDialogState();
@@ -26,7 +24,7 @@ class BookingSummaryDialog extends StatefulWidget {
 
 class _BookingSummaryDialogState extends State<BookingSummaryDialog>
     with TickerProviderStateMixin {
-  CarouselSliderController _carouselController = CarouselSliderController();
+  final CarouselSliderController _carouselController = CarouselSliderController();
   int _currentPage = 0;
   bool _isLoading = false;
   String? _errorMessage;
@@ -101,7 +99,7 @@ class _BookingSummaryDialogState extends State<BookingSummaryDialog>
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Booking Summary'),
-      content: Container(
+      content: SizedBox(
         width: 300, // Fixed width for the AlertDialog content
         child: SingleChildScrollView(
         child: Column(
