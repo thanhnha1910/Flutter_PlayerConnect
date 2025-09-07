@@ -9,6 +9,7 @@ import '../models/location_map_model.dart';
 import '../models/location_card_response.dart';
 import '../models/sport_model.dart';
 import '../models/booking_model.dart';
+
 import '../datasources/location_remote_datasource.dart';
 
 @LazySingleton(as: LocationRepository)

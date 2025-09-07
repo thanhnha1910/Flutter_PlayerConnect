@@ -19,7 +19,7 @@ class UserModel extends Equatable {
   final List<String> roles;
   final String status;
   final bool hasCompletedProfile;
-  
+
   const UserModel({
     required this.id,
     required this.username,
@@ -36,48 +36,94 @@ class UserModel extends Equatable {
     required this.status,
     required this.hasCompletedProfile,
   });
-  
+
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Handle different response structures from backend
-    
-    // Handle roles parsing - convert from object array to string array
-    List<String> parsedRoles = [];
-    if (json['roles'] != null) {
-      final rolesData = json['roles'] as List<dynamic>;
-      parsedRoles = rolesData.map((role) {
-        if (role is String) {
-          return role;
-        } else if (role is Map<String, dynamic> && role['name'] != null) {
-          return role['name'] as String;
+    try {
+      // Handle different response structures from backend
+
+      // Handle roles parsing - convert from object array to string array
+      List<String> parsedRoles = [];
+      if (json['roles'] != null) {
+        final rolesData = json['roles'] as List<dynamic>;
+        parsedRoles = rolesData.map((role) {
+          if (role is String) {
+            return role;
+          } else if (role is Map<String, dynamic> && role['name'] != null) {
+            return role['name'] as String;
+          }
+          return 'ROLE_USER'; // fallback
+        }).toList();
+      } else {
+        // Default roles if not provided (for draft match request responses)
+        parsedRoles = ['ROLE_USER'];
+      }
+
+      // Safely handle sportProfiles - ensure it's a Map or null
+      Map<String, dynamic>? safeSportProfiles;
+      if (json['sportProfiles'] != null) {
+        if (json['sportProfiles'] is Map<String, dynamic>) {
+          safeSportProfiles = json['sportProfiles'] as Map<String, dynamic>;
+        } else {
+          print('Warning: sportProfiles is not a Map, setting to null');
+          safeSportProfiles = null;
         }
-        return 'ROLE_USER'; // fallback
-      }).toList();
-    } else {
-      // Default roles if not provided (for draft match request responses)
-      parsedRoles = ['ROLE_USER'];
+      }
+
+      // Create a modified json map with parsed roles and default values
+      final modifiedJson = Map<String, dynamic>.from(json);
+      modifiedJson['roles'] = parsedRoles;
+      modifiedJson['sportProfiles'] = safeSportProfiles;
+
+      // Handle missing required fields for draft match request responses
+      modifiedJson['email'] = json['email'] ?? '';
+      modifiedJson['status'] = json['status'] ?? 'ACTIVE';
+      modifiedJson['hasCompletedProfile'] = json['hasCompletedProfile'] ?? true;
+
+      // Map avatarUrl to profilePicture if present
+      if (json['avatarUrl'] != null && json['profilePicture'] == null) {
+        modifiedJson['profilePicture'] = json['avatarUrl'];
+      }
+
+      return _$UserModelFromJson(modifiedJson);
+    } catch (e) {
+      print('Error parsing UserModel: $e');
+      print('JSON data: $json');
+      // Return a safe default UserModel
+      return UserModel(
+        id: json['id'] as int? ?? 0,
+        username: json['username'] as String? ?? 'Unknown',
+        email: json['email'] as String? ?? '',
+        fullName: json['fullName'] as String? ?? 'Unknown User',
+        phoneNumber: json['phoneNumber'] as String?,
+        address: json['address'] as String?,
+        profilePicture: json['profilePicture'] as String? ?? json['avatarUrl'] as String?,
+        isDiscoverable: json['isDiscoverable'] as bool?,
+        bookingCount: json['bookingCount'] as int?,
+        memberLevel: json['memberLevel'] as int?,
+        sportProfiles: null, // Set to null to avoid casting issues
+        roles: ['ROLE_USER'],
+        status: json['status'] as String? ?? 'ACTIVE',
+        hasCompletedProfile: json['hasCompletedProfile'] as bool? ?? false,
+      );
     }
-    
-    // Create a modified json map with parsed roles and default values
-    final modifiedJson = Map<String, dynamic>.from(json);
-    modifiedJson['roles'] = parsedRoles;
-    
-    // Handle missing required fields for draft match request responses
-    modifiedJson['email'] = json['email'] ?? '';
-    modifiedJson['status'] = json['status'] ?? 'ACTIVE';
-    modifiedJson['hasCompletedProfile'] = json['hasCompletedProfile'] ?? true;
-    
-    // Map avatarUrl to profilePicture if present
-    if (json['avatarUrl'] != null && json['profilePicture'] == null) {
-      modifiedJson['profilePicture'] = json['avatarUrl'];
-    }
-    
-    return _$UserModelFromJson(modifiedJson);
   }
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
-  
+
   @override
   List<Object?> get props => [
-    id, username, email, fullName, phoneNumber, address, profilePicture,
-    isDiscoverable, bookingCount, memberLevel, sportProfiles, roles, status, hasCompletedProfile
+    id,
+    username,
+    email,
+    fullName,
+    phoneNumber,
+    address,
+    profilePicture,
+    isDiscoverable,
+    bookingCount,
+    memberLevel,
+    sportProfiles,
+    roles,
+    status,
+    hasCompletedProfile,
   ];
 }

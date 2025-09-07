@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class ApiConstants {
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://192.168.1.12:1444/api';
+      return 'http://192.168.1.14:1444/api';
     } else if (Platform.isAndroid) {
-      return 'http://192.168.1.12:1444/api';
+      return 'http://192.168.1.14:1444/api';
     }
-    return 'http://192.168.1.12:1444/api';
+    return 'http://192.168.1.14:1444/api';
   }
 
   static String get aiServiceUrl {
@@ -26,13 +26,13 @@ class ApiConstants {
 
   static String get frontendUrl {
     if (kIsWeb) {
-      return 'http://192.168.1.12:3000';
+      return 'http://192.168.1.14:3000';
     } else if (Platform.isAndroid) {
-      return 'http://192.168.1.12:3000';
+      return 'http://192.168.1.14:3000';
     } else if (Platform.isIOS) {
-      return 'http://192.168.1.12:3000';
+      return 'http://192.168.1.14:3000';
     } else {
-      return 'http://192.168.1.12:3000';
+      return 'http://192.168.1.14:3000';
     }
   }
 
@@ -53,12 +53,22 @@ class ApiConstants {
   // Booking endpoints
   static const String bookingsEndpoint = '/bookings';
   static const String fieldsEndpoint = '/fields';
+  static const String sportsEndpoint = '/sports';
+  static const String activeSportsEndpoint = '/sports/active';
+  
+  // Onboarding endpoints
+  static const String onboardingEndpoint = '/user/profile/onboarding';
+  static const String onboardingStatusEndpoint = '/user/profile/onboarding/status';
+  static const String sportTagsEndpoint = '/sports/{sportId}/tags';
 
   // Match endpoints
   static const String matchesEndpoint = '/matches';
   static const String openMatchesEndpoint = '/open-matches';
+  static const String openMatchesWithUserInfoEndpoint =
+      '/open-matches/with-user-info';
   static const String rankedMatchesEndpoint = '/open-matches/ranked';
-  static const String joinOpenMatchEndpoint = '/open-matches/{id}/join-request';
+  static const String joinOpenMatchEndpoint =
+      '/open-matches/{matchId}/join-request';
   static const String leaveOpenMatchEndpoint = '/open-matches/{id}/leave';
 
   // Chat endpoints
@@ -136,13 +146,13 @@ class ApiConstants {
 
   // AI Recommendation endpoints
   static const String aiRecommendTeammatesEndpoint =
-      '/booking/{id}/recommend-teammates';
+      '/booking/{bookingId}/recommend-teammates';
 
   // Invitation endpoints
   static const String invitationsEndpoint = '/invitations';
   static const String receivedInvitationsEndpoint = '/invitations/received';
   static const String sentInvitationsEndpoint = '/invitations/sent';
-  static const String respondToInvitationEndpoint = '/invitations/{id}/respond';
+  // Note: respondToInvitation now uses separate accept/reject endpoints in datasource
   static const String playerInvitationEndpoint = '/invitations/player/{id}';
   static const String teamInviteEndpoint = '/teams/{teamId}/invite';
 

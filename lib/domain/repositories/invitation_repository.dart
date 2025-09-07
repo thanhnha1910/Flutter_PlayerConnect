@@ -1,15 +1,26 @@
 import 'package:dartz/dartz.dart';
 import '../../core/error/failures.dart';
 import '../../data/models/invitation_model.dart';
+import '../../data/models/unified_invitation_model.dart';
 import '../../data/models/open_match_join_request_model.dart';
 
 abstract class InvitationRepository {
-  Future<Either<Failure, InvitationListResponse>> getReceivedInvitations({
+  // Unified methods
+  Future<Either<Failure, UnifiedInvitationListResponse>>
+  getReceivedInvitations({int page = 0, int size = 10});
+
+  Future<Either<Failure, UnifiedInvitationListResponse>> getSentInvitations({
     int page = 0,
     int size = 10,
   });
 
-  Future<Either<Failure, InvitationListResponse>> getSentInvitations({
+  // Legacy methods for backward compatibility
+  Future<Either<Failure, InvitationListResponse>> getReceivedInvitationsLegacy({
+    int page = 0,
+    int size = 10,
+  });
+
+  Future<Either<Failure, InvitationListResponse>> getSentInvitationsLegacy({
     int page = 0,
     int size = 10,
   });
@@ -50,4 +61,6 @@ abstract class InvitationRepository {
   Future<Either<Failure, void>> approveOpenMatchJoinRequest(int requestId);
 
   Future<Either<Failure, void>> rejectOpenMatchJoinRequest(int requestId);
+
+  Future<Either<Failure, void>> leaveOpenMatch(int openMatchId);
 }

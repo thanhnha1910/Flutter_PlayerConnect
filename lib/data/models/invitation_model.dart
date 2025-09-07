@@ -31,8 +31,62 @@ class InvitationModel {
     this.respondedAt,
   });
 
-  factory InvitationModel.fromJson(Map<String, dynamic> json) =>
-      _$InvitationModelFromJson(json);
+  factory InvitationModel.fromJson(Map<String, dynamic> json) {
+    try {
+      // Safely handle potential null values in nested objects
+      return InvitationModel(
+        id: json['id'] as int? ?? 0,
+        type: json['type'] as String? ?? 'UNKNOWN',
+        status: json['status'] as String? ?? 'PENDING',
+        sender: json['sender'] != null 
+            ? UserModel.fromJson(json['sender'] as Map<String, dynamic>)
+            : UserModel(
+                id: 0,
+                username: 'Unknown',
+                email: '',
+                fullName: 'Unknown User',
+                roles: ['ROLE_USER'],
+                status: 'ACTIVE',
+                hasCompletedProfile: false,
+              ),
+        receiver: json['receiver'] != null
+            ? UserModel.fromJson(json['receiver'] as Map<String, dynamic>)
+            : null,
+        team: json['team'] != null
+            ? TeamModel.fromJson(json['team'] as Map<String, dynamic>)
+            : null,
+        draftMatch: json['draftMatch'] != null
+            ? DraftMatchModel.fromJson(json['draftMatch'] as Map<String, dynamic>)
+            : null,
+        message: json['message'] as String?,
+        createdAt: json['createdAt'] != null
+            ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
+            : DateTime.now(),
+        respondedAt: json['respondedAt'] != null
+            ? DateTime.tryParse(json['respondedAt'] as String)
+            : null,
+      );
+    } catch (e) {
+      print('Error parsing InvitationModel: $e');
+      print('JSON data: $json');
+      // Return a safe default
+      return InvitationModel(
+        id: 0,
+        type: 'UNKNOWN',
+        status: 'PENDING',
+        sender: UserModel(
+          id: 0,
+          username: 'Unknown',
+          email: '',
+          fullName: 'Unknown User',
+          roles: ['ROLE_USER'],
+          status: 'ACTIVE',
+          hasCompletedProfile: false,
+        ),
+        createdAt: DateTime.now(),
+      );
+    }
+  }
 
   Map<String, dynamic> toJson() => _$InvitationModelToJson(this);
 

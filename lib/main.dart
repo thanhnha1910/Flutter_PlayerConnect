@@ -12,7 +12,9 @@ import 'presentation/bloc/location/location_bloc.dart';
 import 'presentation/bloc/community/community_bloc.dart';
 import 'presentation/bloc/tournament/tournament_bloc.dart';
 import 'presentation/bloc/draft_match/draft_match_bloc.dart';
+import 'presentation/bloc/onboarding/onboarding_bloc.dart';
 import 'presentation/screens/main_navigation_screen.dart';
+import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/widgets/loading_overlay.dart';
 
 void main() {
@@ -46,6 +48,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => getIt<DraftMatchBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<OnboardingBloc>(),
         ),
       ],
       child: MaterialApp(
@@ -84,7 +89,27 @@ class AuthWrapper extends StatelessWidget {
               ),
             );
           } else if (state is Authenticated) {
-            return const MainNavigationScreen();
+            // Check if user needs onboarding
+            final user = state.user;
+            print('🔍 DEBUG: AuthWrapper - Authenticated user data:');
+            print('   - hasCompletedProfile: ${user.hasCompletedProfile}');
+            print('   - roles: ${user.roles}');
+            print('   - username: ${user.username}');
+            
+            final needsOnboarding = !user.hasCompletedProfile && 
+                                  user.roles.contains('ROLE_USER') &&
+                                  !user.roles.any((role) => role == 'ROLE_ADMIN') &&
+                                  !user.roles.any((role) => role == 'ROLE_OWNER');
+            
+            print('🎯 DEBUG: AuthWrapper - needsOnboarding = $needsOnboarding');
+            
+            if (needsOnboarding) {
+              print('🎯 AuthWrapper: User needs onboarding - showing onboarding screen');
+              return const OnboardingScreen();
+            } else {
+              print('✅ AuthWrapper: User completed onboarding - showing main navigation');
+              return const MainNavigationScreen();
+            }
           } else {
             return const LoginScreen();
           }

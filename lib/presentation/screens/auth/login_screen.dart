@@ -91,6 +91,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _emailError;
+  String? _passwordError;
+  String? _generalError;
 
   @override
   void dispose() {
@@ -99,11 +102,57 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _clearErrors() {
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+      _generalError = null;
+    });
+  }
+
+  void _handleAuthFailure(String errorMessage) {
+    print('=== DEBUG: _handleAuthFailure called with message: "$errorMessage" ===');
+    setState(() {
+      _generalError = null;
+      _emailError = null;
+      _passwordError = null;
+      
+      // Xử lý các loại lỗi cụ thể
+      if (errorMessage.toLowerCase().contains('email không tồn tại') ||
+          errorMessage.toLowerCase().contains('user not found') ||
+          errorMessage.toLowerCase().contains('email not found') ||
+          errorMessage.toLowerCase().contains('error: email not found') ||
+          errorMessage.toLowerCase().contains('không tìm thấy người dùng')) {
+        _emailError = 'Email này chưa được đăng ký';
+      } else if (errorMessage.toLowerCase().contains('mật khẩu không đúng') ||
+                 errorMessage.toLowerCase().contains('incorrect password') ||
+                 errorMessage.toLowerCase().contains('invalid password') ||
+                 errorMessage.toLowerCase().contains('error:bad credentials') ||
+                 errorMessage.toLowerCase().contains('sai mật khẩu')) {
+        _passwordError = 'Mật khẩu không chính xác';
+      } else if (errorMessage.toLowerCase().contains('email không hợp lệ') ||
+                 errorMessage.toLowerCase().contains('invalid email')) {
+        _emailError = 'Định dạng email không hợp lệ';
+      } else if (errorMessage.toLowerCase().contains('tài khoản bị khóa') ||
+                 errorMessage.toLowerCase().contains('account locked')) {
+        _generalError = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.';
+      } else if (errorMessage.toLowerCase().contains('connection') ||
+                 errorMessage.toLowerCase().contains('network') ||
+                 errorMessage.toLowerCase().contains('timeout')) {
+        _generalError = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.';
+      } else {
+        _generalError = errorMessage.isNotEmpty ? errorMessage : 'Đăng nhập thất bại. Vui lòng thử lại.';
+      }
+    });
+  }
+
   void _login() {
     print('=== UI: Login button pressed ===');
     print('UI: Email: ${_emailController.text.trim()}');
     print('UI: Password length: ${_passwordController.text.length}');
     print('UI: Form validation starting...');
+    
+    _clearErrors(); // Xóa lỗi cũ trước khi đăng nhập
     
     if (_formKey.currentState!.validate()) {
       print('UI: Form validation passed, dispatching LoginRequested event');
@@ -132,6 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    bool hasError = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -146,8 +196,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1,
+          color: hasError 
+              ? Colors.red.withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.2),
+          width: hasError ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -235,18 +287,26 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.errorColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            print('=== DEBUG: BlocConsumer received AuthFailure with message: "${state.message}" ===');
+            _handleAuthFailure(state.message);
+            
+            // Chỉ hiển thị SnackBar cho lỗi chung, không phải lỗi cụ thể
+            if (_generalError != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_generalError!),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           } else if (state is Authenticated) {
-            Navigator.of(context).pushReplacementNamed('/home');
+            // Navigation is now handled by AuthWrapper in main.dart
+            print('✅ DEBUG: User authenticated - AuthWrapper will handle navigation');
           }
         },
         builder: (context, state) {
@@ -404,22 +464,40 @@ class _LoginScreenState extends State<LoginScreen> {
                                       // Enhanced Email Field
                                       Container(
                                         key: const Key('email_field'),
-                                        child: _buildEnhancedGlassTextField(
-                                          controller: _emailController,
-                                          label: 'Email',
-                                          hintText: 'Nhập email của bạn',
-                                          prefixIcon: Icons.email_outlined,
-                                          keyboardType: TextInputType.emailAddress,
-                                          validator: (value) {
-                                            if (value == null || value.isEmpty) {
-                                              return 'Vui lòng nhập email';
-                                            }
-                                            if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                                .hasMatch(value)) {
-                                              return 'Email không hợp lệ';
-                                            }
-                                            return null;
-                                          },
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            _buildEnhancedGlassTextField(
+                                              controller: _emailController,
+                                              label: 'Email',
+                                              hintText: 'Nhập email của bạn',
+                                              prefixIcon: Icons.email_outlined,
+                                              keyboardType: TextInputType.emailAddress,
+                                              hasError: _emailError != null,
+                                              validator: (value) {
+                                                if (value == null || value.isEmpty) {
+                                                  return 'Vui lòng nhập email';
+                                                }
+                                                if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                                    .hasMatch(value)) {
+                                                  return 'Email không hợp lệ';
+                                                }
+                                                return null;
+                                              },
+                                            ),
+                                            if (_emailError != null)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 8, left: 16),
+                                                child: Text(
+                                                  _emailError!,
+                                                  style: const TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       
@@ -428,34 +506,52 @@ class _LoginScreenState extends State<LoginScreen> {
                                       // Enhanced Password Field
                                       Container(
                                         key: const Key('password_field'),
-                                        child: _buildEnhancedGlassTextField(
-                                          controller: _passwordController,
-                                          label: 'Mật khẩu',
-                                          hintText: 'Nhập mật khẩu của bạn',
-                                          prefixIcon: Icons.lock_outline,
-                                          obscureText: _obscurePassword,
-                                          suffixIcon: IconButton(
-                                            icon: Icon(
-                                              _obscurePassword
-                                                  ? Icons.visibility_outlined
-                                                  : Icons.visibility_off_outlined,
-                                              color: Colors.white.withValues(alpha: 0.7),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            _buildEnhancedGlassTextField(
+                                              controller: _passwordController,
+                                              label: 'Mật khẩu',
+                                              hintText: 'Nhập mật khẩu của bạn',
+                                              prefixIcon: Icons.lock_outline,
+                                              obscureText: _obscurePassword,
+                                              hasError: _passwordError != null,
+                                              suffixIcon: IconButton(
+                                                icon: Icon(
+                                                  _obscurePassword
+                                                      ? Icons.visibility_outlined
+                                                      : Icons.visibility_off_outlined,
+                                                  color: Colors.white.withValues(alpha: 0.7),
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _obscurePassword = !_obscurePassword;
+                                                  });
+                                                },
+                                              ),
+                                              validator: (value) {
+                                                if (value == null || value.isEmpty) {
+                                                  return 'Vui lòng nhập mật khẩu';
+                                                }
+                                                if (value.length < 6) {
+                                                  return 'Mật khẩu phải có ít nhất 6 ký tự';
+                                                }
+                                                return null;
+                                              },
                                             ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _obscurePassword = !_obscurePassword;
-                                              });
-                                            },
-                                          ),
-                                          validator: (value) {
-                                            if (value == null || value.isEmpty) {
-                                              return 'Vui lòng nhập mật khẩu';
-                                            }
-                                            if (value.length < 6) {
-                                              return 'Mật khẩu phải có ít nhất 6 ký tự';
-                                            }
-                                            return null;
-                                          },
+                                            if (_passwordError != null)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 8, left: 16),
+                                                child: Text(
+                                                  _passwordError!,
+                                                  style: const TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       
@@ -491,39 +587,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       const SizedBox(height: 24),
                                       
                                       // Divider
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Divider(
-                                              color: Colors.white.withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                                            child: Text(
-                                              'Hoặc',
-                                              style: TextStyle(
-                                                color: Colors.white.withValues(alpha: 0.7),
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Divider(
-                                              color: Colors.white.withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      
-                                      const SizedBox(height: 24),
+                                    
                                       
                                       // Google Sign In
-                                      SocialLoginButton(
-                                        text: 'Đăng nhập với Google',
-                                        iconPath: 'assets/icons/google.png',
-                                        onPressed: _googleSignIn,
-                                      ),
+                                  
                                     ],
                                   ),
                                 ),
