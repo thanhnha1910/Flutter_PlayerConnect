@@ -6,8 +6,10 @@ import '../../../data/models/booking_receipt_model.dart';
 import '../../../data/repositories/booking_repository_impl.dart';
 import '../../../domain/repositories/booking_repository.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/services/ai_recommendation_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/ai_recommendation/find_teammates_prompt.dart';
+import '../../widgets/ai_recommendation/create_open_match_modal.dart';
 
 class BookingReceiptScreen extends StatefulWidget {
   final String bookingId;
@@ -26,6 +28,11 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _isBatch = false;
+  int _recommendedCount = 0;
+  bool _hasOpenMatch = false;
+  int? _openMatchId;
+  List<dynamic> _recommendedPlayers = [];
+  bool _isLoadingRecommendations = false;
 
   @override
   void initState() {
@@ -40,25 +47,169 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
       
       result.fold(
         (failure) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = failure.message;
-          });
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage = failure.message;
+            });
+          }
         },
-        (bookingData) {
-          setState(() {
-            _isLoading = false;
-            _bookingData = bookingData;
-            _isBatch = bookingData is BatchBookingReceiptModel;
-          });
+        (bookingData) async {
+          // Fetch recommended count for both single and batch bookings
+          int recommendedCount = 0;
+          String bookingIdForRecommendation = widget.bookingId;
+          
+          if (bookingData is BookingReceiptModel) {
+            // For single booking, use the booking ID directly
+            bookingIdForRecommendation = widget.bookingId;
+          } else if (bookingData is BatchBookingReceiptModel && bookingData.bookings.isNotEmpty) {
+            // For batch booking, use the first booking ID for recommendation
+            bookingIdForRecommendation = bookingData.bookings.first.id.toString();
+          }
+          
+          try {
+            final aiService = getIt<AIRecommendationService>();
+            
+            // Auto-fetch recommendations data like FE does with useSWR
+            setState(() {
+              _isLoadingRecommendations = true;
+            });
+            
+            final recommendationsResponse = await aiService.getTeammateRecommendations(bookingIdForRecommendation);
+            recommendedCount = recommendationsResponse.recommendedPlayers.length;
+            
+            // Check if open match exists by getting open matches and filtering by bookingId
+            bool hasOpenMatch = false;
+            int? openMatchId;
+            try {
+              final openMatches = await aiService.getOpenMatches();
+              // Convert bookingIdForRecommendation to int for comparison since match.bookingId is int?
+              final bookingIdInt = int.tryParse(bookingIdForRecommendation);
+              final matchingOpenMatch = openMatches.where((match) => match.bookingId == bookingIdInt).firstOrNull;
+              hasOpenMatch = matchingOpenMatch != null;
+              openMatchId = matchingOpenMatch?.id;
+            } catch (e) {
+              // If we can't get open matches, assume no open match exists
+              hasOpenMatch = false;
+              openMatchId = null;
+            }
+            
+            if (mounted) {
+              setState(() {
+                _hasOpenMatch = hasOpenMatch;
+                _openMatchId = openMatchId;
+                _recommendedPlayers = recommendationsResponse.recommendedPlayers;
+                _isLoadingRecommendations = false;
+              });
+            }
+          } catch (e) {
+            // Silently handle error, keep recommendedCount as 0
+            print('Failed to fetch recommendations: $e');
+            if (mounted) {
+              setState(() {
+                _isLoadingRecommendations = false;
+              });
+            }
+          }
+          
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _bookingData = bookingData;
+              _isBatch = bookingData is BatchBookingReceiptModel;
+              _recommendedCount = recommendedCount;
+            });
+          }
         },
       );
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to load booking details: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Failed to load booking details: $e';
+        });
+      }
     }
+  }
+
+  Future<void> _refreshRecommendedCount() async {
+    String bookingIdForRecommendation = widget.bookingId;
+    
+    if (_bookingData is BookingReceiptModel) {
+      bookingIdForRecommendation = widget.bookingId;
+    } else if (_bookingData is BatchBookingReceiptModel && (_bookingData as BatchBookingReceiptModel).bookings.isNotEmpty) {
+      bookingIdForRecommendation = (_bookingData as BatchBookingReceiptModel).bookings.first.id.toString();
+    }
+    
+    try {
+      final aiService = getIt<AIRecommendationService>();
+      
+      // Fetch full recommendations data like in initState
+      setState(() {
+        _isLoadingRecommendations = true;
+      });
+      
+      final recommendationsResponse = await aiService.getTeammateRecommendations(bookingIdForRecommendation);
+      final recommendedCount = recommendationsResponse.recommendedPlayers.length;
+      
+      // Also refresh hasOpenMatch status and openMatchId
+      bool hasOpenMatch = false;
+      int? openMatchId;
+      try {
+        final openMatches = await aiService.getOpenMatches();
+        // Convert bookingIdForRecommendation to int for comparison since match.bookingId is int?
+        final bookingIdInt = int.tryParse(bookingIdForRecommendation);
+        final matchingOpenMatch = openMatches.where((match) => match.bookingId == bookingIdInt).firstOrNull;
+        hasOpenMatch = matchingOpenMatch != null;
+        openMatchId = matchingOpenMatch?.id;
+      } catch (e) {
+        hasOpenMatch = false;
+        openMatchId = null;
+      }
+      
+      if (mounted) {
+        setState(() {
+          _recommendedCount = recommendedCount;
+          _hasOpenMatch = hasOpenMatch;
+          _openMatchId = openMatchId;
+          _recommendedPlayers = recommendationsResponse.recommendedPlayers;
+          _isLoadingRecommendations = false;
+        });
+      }
+    } catch (e) {
+      print('Failed to refresh recommendations: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingRecommendations = false;
+        });
+      }
+    }
+  }
+
+  void _showCreateOpenMatchModal(BookingReceiptModel booking) {
+    // Convert BookingReceiptModel to BookingModel for the modal
+    final bookingModel = BookingModel(
+      id: booking.id,
+      fieldId: booking.fieldId ?? 0, // Provide default if null
+      fieldName: booking.fieldName ?? 'Unknown Field',
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      totalPrice: booking.totalPrice ?? 0.0,
+      status: booking.status,
+      createdAt: DateTime.now(), // Use current time as fallback
+      updatedAt: DateTime.now(),
+    );
+    
+    showDialog(
+      context: context,
+      builder: (context) => CreateOpenMatchModal(
+        bookingDetails: bookingModel,
+        onSuccess: (openMatch) {
+          // Refresh recommended count after creating open match
+          _refreshRecommendedCount();
+        },
+      ),
+    );
   }
 
   @override
@@ -208,6 +359,50 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
           const SizedBox(height: 16),
           ...batchBooking.bookings.map((booking) => _buildBookingCard(booking)).toList(),
           
+          const SizedBox(height: 24),
+          
+          // Find Teammates Prompt for batch booking with Refresh Button
+          if (batchBooking.bookings.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Find Teammates',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _isLoadingRecommendations ? null : _refreshRecommendedCount,
+                      icon: _isLoadingRecommendations 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                      tooltip: 'Refresh recommendations',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                FindTeammatesPrompt(
+                  bookingId: batchBooking.bookings.first.id.toString(),
+                  recommendedCount: _recommendedCount,
+                  hasOpenMatch: _hasOpenMatch,
+                  openMatchId: _openMatchId?.toString(),
+                  recommendedPlayers: _recommendedPlayers,
+                  isLoadingRecommendations: _isLoadingRecommendations,
+                  onCreateOpenMatch: () => _showCreateOpenMatchModal(batchBooking.bookings.first),
+                  onOpenMatchCreated: _refreshRecommendedCount,
+                ),
+              ],
+            ),
+          
           const SizedBox(height: 32),
           
           // Action Buttons
@@ -325,9 +520,45 @@ class _BookingReceiptScreenState extends State<BookingReceiptScreen> {
           ),
           const SizedBox(height: 24),
           
-          // Find Teammates Prompt
-          FindTeammatesPrompt(
-            bookingId: booking.id.toString(),
+          // Find Teammates Prompt with Refresh Button
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Find Teammates',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _isLoadingRecommendations ? null : _refreshRecommendedCount,
+                    icon: _isLoadingRecommendations 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh),
+                    tooltip: 'Refresh recommendations',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              FindTeammatesPrompt(
+                bookingId: widget.bookingId,
+                recommendedCount: _recommendedCount,
+                hasOpenMatch: _hasOpenMatch,
+                openMatchId: _openMatchId?.toString(),
+                recommendedPlayers: _recommendedPlayers,
+                isLoadingRecommendations: _isLoadingRecommendations,
+                onCreateOpenMatch: () => _showCreateOpenMatchModal(booking),
+                onOpenMatchCreated: _refreshRecommendedCount,
+              ),
+            ],
           ),
           const SizedBox(height: 32),
           

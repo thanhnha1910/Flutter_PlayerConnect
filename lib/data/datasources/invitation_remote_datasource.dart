@@ -3,16 +3,29 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import '../models/invitation_model.dart';
 import '../models/open_match_join_request_model.dart';
+import '../models/unified_invitation_model.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/error/exceptions.dart';
 
 abstract class InvitationRemoteDataSource {
-  Future<InvitationListResponse> getReceivedInvitations({
+  // Unified endpoints
+  Future<UnifiedInvitationListResponse> getReceivedInvitations({
     int page = 0,
     int size = 10,
   });
 
-  Future<InvitationListResponse> getSentInvitations({
+  Future<UnifiedInvitationListResponse> getSentInvitations({
+    int page = 0,
+    int size = 10,
+  });
+
+  // Legacy methods for backward compatibility
+  Future<InvitationListResponse> getReceivedInvitationsLegacy({
+    int page = 0,
+    int size = 10,
+  });
+
+  Future<InvitationListResponse> getSentInvitationsLegacy({
     int page = 0,
     int size = 10,
   });
@@ -53,6 +66,7 @@ abstract class InvitationRemoteDataSource {
 
   Future<void> approveOpenMatchJoinRequest(int requestId);
   Future<void> rejectOpenMatchJoinRequest(int requestId);
+  Future<void> leaveOpenMatch(int openMatchId);
 }
 
 @LazySingleton(as: InvitationRemoteDataSource)
@@ -62,7 +76,57 @@ class InvitationRemoteDataSourceImpl implements InvitationRemoteDataSource {
   InvitationRemoteDataSourceImpl(this.dio);
 
   @override
-  Future<InvitationListResponse> getReceivedInvitations({
+  Future<UnifiedInvitationListResponse> getReceivedInvitations({
+    int page = 0,
+    int size = 10,
+  }) async {
+    try {
+      final response = await dio.get(
+        '${ApiConstants.baseUrl}${ApiConstants.receivedInvitationsEndpoint}',
+        queryParameters: {'page': page, 'size': size},
+      );
+
+      if (response.statusCode == 200) {
+        print(
+          'getSentInvitations response.data type: ${response.data.runtimeType}',
+        );
+        print('getSentInvitations response.data: ${response.data}');
+        return UnifiedInvitationListResponse.fromJson(response.data);
+      } else {
+        throw ServerException('Failed to fetch received invitations');
+      }
+    } on DioException catch (e) {
+      throw ServerException('Network error: ${e.message}');
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<UnifiedInvitationListResponse> getSentInvitations({
+    int page = 0,
+    int size = 10,
+  }) async {
+    try {
+      final response = await dio.get(
+        '${ApiConstants.baseUrl}${ApiConstants.sentInvitationsEndpoint}',
+        queryParameters: {'page': page, 'size': size},
+      );
+
+      if (response.statusCode == 200) {
+        return UnifiedInvitationListResponse.fromJson(response.data);
+      } else {
+        throw ServerException('Failed to fetch sent invitations');
+      }
+    } on DioException catch (e) {
+      throw ServerException('Network error: ${e.message}');
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<InvitationListResponse> getReceivedInvitationsLegacy({
     int page = 0,
     int size = 10,
   }) async {
@@ -100,7 +164,7 @@ class InvitationRemoteDataSourceImpl implements InvitationRemoteDataSource {
   }
 
   @override
-  Future<InvitationListResponse> getSentInvitations({
+  Future<InvitationListResponse> getSentInvitationsLegacy({
     int page = 0,
     int size = 10,
   }) async {
@@ -251,10 +315,13 @@ class InvitationRemoteDataSourceImpl implements InvitationRemoteDataSource {
     InvitationActionRequest request,
   ) async {
     try {
+      // Use the correct backend endpoints based on action
+      final endpoint = request.action == 'ACCEPT' 
+          ? '/invitations/$invitationId/accept'
+          : '/invitations/$invitationId/reject';
+      
       final response = await dio.post(
-        '${ApiConstants.baseUrl}${ApiConstants.respondToInvitationEndpoint}'
-            .replaceAll('{id}', invitationId.toString()),
-        data: request.toJson(),
+        '${ApiConstants.baseUrl}$endpoint',
       );
 
       if (response.statusCode != 200) {
@@ -311,15 +378,29 @@ class InvitationRemoteDataSourceImpl implements InvitationRemoteDataSource {
     try {
       final response = await dio.post(
         '${ApiConstants.baseUrl}${ApiConstants.joinOpenMatchEndpoint}'
-            .replaceAll('{id}', openMatchId.toString()),
-        data: request.toJson(),
+            .replaceAll('{matchId}', openMatchId.toString()),
+        // Backend không cần request body, chỉ cần matchId trong URL
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw ServerException('Failed to send open match join request');
+        // Try to extract error message from response
+        String errorMessage = 'Failed to send open match join request';
+        if (response.data is Map<String, dynamic>) {
+          final responseData = response.data as Map<String, dynamic>;
+          errorMessage = responseData['message'] ?? errorMessage;
+        }
+        throw ServerException(errorMessage);
       }
     } on DioException catch (e) {
-      throw ServerException('Network error: ${e.message}');
+      // Parse error message from response if available
+      String errorMessage = 'Network error';
+      if (e.response?.data is Map<String, dynamic>) {
+        final responseData = e.response!.data as Map<String, dynamic>;
+        errorMessage = responseData['message'] ?? errorMessage;
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      throw ServerException(errorMessage);
     } catch (e) {
       throw ServerException('Unexpected error: $e');
     }
@@ -443,6 +524,23 @@ class InvitationRemoteDataSourceImpl implements InvitationRemoteDataSource {
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to reject open match join request');
+      }
+    } on DioException catch (e) {
+      throw ServerException('Network error: ${e.message}');
+    } catch (e) {
+      throw ServerException('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> leaveOpenMatch(int openMatchId) async {
+    try {
+      final response = await dio.delete(
+        '${ApiConstants.baseUrl}/open-matches/$openMatchId/leave',
+      );
+
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to leave open match');
       }
     } on DioException catch (e) {
       throw ServerException('Network error: ${e.message}');

@@ -108,10 +108,47 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   
   Exception _handleDioError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data['message'] ?? 'Đã xảy ra lỗi';
-      return Exception(message);
+      final statusCode = e.response?.statusCode;
+      final responseData = e.response?.data;
+      
+      switch (statusCode) {
+        case 400:
+          // Bad request - thường là validation errors
+          final message = responseData?['message'] ?? 'Yêu cầu không hợp lệ';
+          return Exception(message);
+        case 401:
+          // Unauthorized - sai thông tin đăng nhập
+          final message = responseData?['message'] ?? 'Email hoặc mật khẩu không đúng';
+          return Exception(message);
+        case 403:
+          // Forbidden - tài khoản bị khóa hoặc chưa xác thực
+          final message = responseData?['message'] ?? 'Tài khoản của bạn đã bị khóa hoặc chưa được xác thực';
+          return Exception(message);
+        case 404:
+          // Not found - email không tồn tại
+          final message = responseData?['message'] ?? 'Email không tồn tại trong hệ thống';
+          return Exception(message);
+        case 500:
+          // Server error
+          return Exception('Lỗi máy chủ. Vui lòng thử lại sau');
+        default:
+          final message = responseData?['message'] ?? 'Đã xảy ra lỗi không xác định';
+          return Exception(message);
+      }
     } else {
-      return Exception('Không thể kết nối đến máy chủ');
+      // Network errors
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return Exception('Kết nối bị timeout. Vui lòng kiểm tra mạng và thử lại');
+        case DioExceptionType.connectionError:
+          return Exception('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng');
+        case DioExceptionType.cancel:
+          return Exception('Yêu cầu đã bị hủy');
+        default:
+          return Exception('Lỗi mạng: ${e.message}');
+      }
     }
   }
 }

@@ -141,6 +141,7 @@ class GeocodingService {
       }
     } catch (e) {
       print('Error getting short address: $e');
+      return null;
     }
     
     return null;

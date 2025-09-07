@@ -98,7 +98,7 @@ class NotificationModel extends Equatable {
 
   static NotificationType _typeFromJson(String? type) {
     if (type == null) return NotificationType.other;
-    
+
     switch (type.toUpperCase()) {
       case 'FRIEND_REQUEST':
         return NotificationType.friendRequest;
@@ -209,7 +209,8 @@ class NotificationModel extends Equatable {
     }
   }
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) => _$NotificationModelFromJson(json);
+  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
+      _$NotificationModelFromJson(json);
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 
   NotificationModel copyWith({
@@ -244,11 +245,11 @@ class NotificationModel extends Equatable {
 
   // Helper methods
   bool get isUnread => !isRead;
-  
+
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} ngày trước';
     } else if (difference.inHours > 0) {
@@ -259,7 +260,7 @@ class NotificationModel extends Equatable {
       return 'Vừa xong';
     }
   }
-  
+
   String get typeDisplayName {
     switch (type) {
       case NotificationType.friendRequest:
@@ -314,7 +315,7 @@ class NotificationModel extends Equatable {
         return 'Khác';
     }
   }
-  
+
   String get typeIcon {
     switch (type) {
       case NotificationType.friendRequest:
@@ -372,19 +373,19 @@ class NotificationModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        recipientId,
-        title,
-        message,
-        type,
-        isRead,
-        createdAt,
-        readAt,
-        data,
-        actionUrl,
-        imageUrl,
-        recipientData,
-      ];
+    id,
+    recipientId,
+    title,
+    message,
+    type,
+    isRead,
+    createdAt,
+    readAt,
+    data,
+    actionUrl,
+    imageUrl,
+    recipientData,
+  ];
 
   @override
   String toString() {

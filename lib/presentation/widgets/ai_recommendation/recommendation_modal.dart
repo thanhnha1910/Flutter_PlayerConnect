@@ -7,12 +7,18 @@ class RecommendationModal extends StatefulWidget {
   final List<RecommendedPlayerModel> recommendations;
   final String bookingId;
   final VoidCallback onClose;
+  final bool hasOpenMatch;
+  final List<dynamic> recommendedPlayers;
+  final String? openMatchId;
 
   const RecommendationModal({
     Key? key,
     required this.recommendations,
     required this.bookingId,
     required this.onClose,
+    this.hasOpenMatch = false,
+    this.recommendedPlayers = const [],
+    this.openMatchId,
   }) : super(key: key);
 
   @override
@@ -24,18 +30,32 @@ class _RecommendationModalState extends State<RecommendationModal> {
   final Set<String> _sentInvitations = {};
   bool _isLoading = false;
 
+  List<dynamic> get _recommendations => widget.recommendedPlayers;
+
   Future<void> _sendInvitation(RecommendedPlayerModel player) async {
     if (_sentInvitations.contains(player.id)) return;
+
+    // Check if openMatchId is available
+    if (widget.openMatchId == null || widget.openMatchId!.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lỗi: Bạn cần tạo trận đấu mở trước khi mời người chơi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await _aiService.sendPlayerInvitation(
-        bookingId: widget.bookingId,
+      await _aiService.sendInvitation(
         inviteeId: player.id,
-        message: 'Bạn có muốn tham gia trận đấu cùng tôi không?',
+        openMatchId: widget.openMatchId!,
       );
 
       setState(() {
@@ -66,6 +86,13 @@ class _RecommendationModalState extends State<RecommendationModal> {
     }
   }
 
+  /// Format compatibility score with validation similar to React's convertCompatibilityScore
+  int _formatCompatibilityScore(double rawScore) {
+    // Clamp score between 0 and 1, then convert to percentage
+    final clampedScore = rawScore.clamp(0.0, 1.0);
+    return (clampedScore * 100).round();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -73,20 +100,53 @@ class _RecommendationModalState extends State<RecommendationModal> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.all(20),
+        width: MediaQuery.of(context).size.width * 0.95,
+        height: MediaQuery.of(context).size.height * 0.8,
+        constraints: const BoxConstraints(
+          maxWidth: 400,
+          maxHeight: 600,
+        ),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Gợi ý đồng đội',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Gợi ý đồng đội',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (!widget.hasOpenMatch)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange[200]!),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.orange[600], size: 20),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Bạn cần tạo Open Match trước khi gửi lời mời',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 IconButton(
@@ -116,14 +176,14 @@ class _RecommendationModalState extends State<RecommendationModal> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
                                 CircleAvatar(
-                                  radius: 25,
+                                  radius: 20,
                                   backgroundImage: player.avatar != null
                                       ? NetworkImage(player.avatar!)
                                       : null,
@@ -139,7 +199,7 @@ class _RecommendationModalState extends State<RecommendationModal> {
                                         )
                                       : null,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,14 +219,15 @@ class _RecommendationModalState extends State<RecommendationModal> {
                                             color: Colors.grey[600],
                                           ),
                                         ),
-                                      Text(
-                                        'Độ phù hợp: ${(player.compatibilityScore * 100).toInt()}%',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blue[600],
-                                          fontWeight: FontWeight.w500,
+                                      if (player.compatibilityScore != null && player.compatibilityScore! >= 0)
+                                        Text(
+                                          'Độ phù hợp: ${_formatCompatibilityScore(player.compatibilityScore!)}%',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.blue[600],
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -182,15 +243,15 @@ class _RecommendationModalState extends State<RecommendationModal> {
                                 )).toList(),
                               ),
                             ],
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: isInvited || _isLoading
+                                onPressed: isInvited || _isLoading || !widget.hasOpenMatch
                                     ? null
                                     : () => _sendInvitation(player),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isInvited
+                                  backgroundColor: isInvited || !widget.hasOpenMatch
                                       ? Colors.grey
                                       : Theme.of(context).primaryColor,
                                   foregroundColor: Colors.white,
@@ -209,7 +270,11 @@ class _RecommendationModalState extends State<RecommendationModal> {
                                         ),
                                       )
                                     : Text(
-                                        isInvited ? 'Đã gửi lời mời' : 'Gửi lời mời',
+                                        isInvited 
+                                            ? 'Đã gửi lời mời' 
+                                            : !widget.hasOpenMatch
+                                                ? 'Cần tạo Open Match'
+                                                : 'Gửi lời mời',
                                         style: const TextStyle(fontSize: 16),
                                       ),
                               ),

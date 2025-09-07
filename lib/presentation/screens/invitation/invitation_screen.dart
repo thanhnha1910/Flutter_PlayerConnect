@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../widgets/invitation_card.dart';
 import '../../../data/models/invitation_model.dart';
+import '../../../data/models/unified_invitation_model.dart';
+import '../../../data/models/open_match_join_request_model.dart';
 import '../../../data/datasources/invitation_remote_datasource.dart';
 import '../../../data/repositories/invitation_repository_impl.dart';
 import '../../../core/network/api_client.dart';
@@ -23,18 +25,21 @@ class _InvitationScreenState extends State<InvitationScreen>
   StreamSubscription<Map<String, dynamic>>? _invitationSubscription;
   StreamSubscription<Map<String, dynamic>>? _draftMatchSubscription;
 
-  List<InvitationModel> _receivedInvitations = [];
-  List<InvitationModel> _sentInvitations = [];
+  List<UnifiedInvitationModel> _receivedInvitations = [];
+  List<UnifiedInvitationModel> _sentInvitations = [];
   List<DraftMatchRequestModel> _receivedRequests = [];
   List<DraftMatchRequestModel> _sentRequests = [];
+  List<OpenMatchJoinRequestModel> _receivedOpenMatchRequests = [];
+  List<OpenMatchJoinRequestModel> _sentOpenMatchRequests = [];
 
   bool _isLoadingReceived = false;
   bool _isLoadingSent = false;
   String? _errorMessage;
-  
+
   // Debouncing timers to prevent excessive API calls
   Timer? _refreshInvitationsTimer;
   Timer? _refreshRequestsTimer;
+  Timer? _refreshOpenMatchRequestsTimer;
 
   @override
   void initState() {
@@ -60,6 +65,7 @@ class _InvitationScreenState extends State<InvitationScreen>
     _draftMatchSubscription?.cancel();
     _refreshInvitationsTimer?.cancel();
     _refreshRequestsTimer?.cancel();
+    _refreshOpenMatchRequestsTimer?.cancel();
     super.dispose();
   }
 
@@ -73,7 +79,7 @@ class _InvitationScreenState extends State<InvitationScreen>
         print('WebSocket invitation stream error: $error');
       },
     );
-    
+
     // Listen to draft match stream for real-time updates
     _draftMatchSubscription = _webSocketProvider.draftMatchStream.listen(
       (message) {
@@ -87,7 +93,7 @@ class _InvitationScreenState extends State<InvitationScreen>
 
   void _handleWebSocketMessage(Map<String, dynamic> message) {
     if (!mounted) return;
-    
+
     try {
       final type = message['type'] as String?;
       final data = message['data'] as Map<String, dynamic>?;
@@ -107,6 +113,12 @@ class _InvitationScreenState extends State<InvitationScreen>
         case 'DRAFT_MATCH_REQUEST_REJECTED':
           _debouncedRefreshRequests();
           break;
+        case 'OPEN_MATCH_JOIN_REQUEST_RECEIVED':
+        case 'OPEN_MATCH_JOIN_REQUEST_UPDATED':
+        case 'OPEN_MATCH_JOIN_REQUEST_ACCEPTED':
+        case 'OPEN_MATCH_JOIN_REQUEST_REJECTED':
+          _debouncedRefreshOpenMatchRequests();
+          break;
         default:
           print('Unknown invitation WebSocket message type: $type');
       }
@@ -114,7 +126,7 @@ class _InvitationScreenState extends State<InvitationScreen>
       print('Error handling WebSocket message: $e');
     }
   }
-  
+
   void _debouncedRefreshInvitations() {
     _refreshInvitationsTimer?.cancel();
     _refreshInvitationsTimer = Timer(const Duration(milliseconds: 500), () {
@@ -123,7 +135,7 @@ class _InvitationScreenState extends State<InvitationScreen>
       }
     });
   }
-  
+
   void _debouncedRefreshRequests() {
     _refreshRequestsTimer?.cancel();
     _refreshRequestsTimer = Timer(const Duration(milliseconds: 500), () {
@@ -131,6 +143,18 @@ class _InvitationScreenState extends State<InvitationScreen>
         _refreshDraftMatchRequests();
       }
     });
+  }
+
+  void _debouncedRefreshOpenMatchRequests() {
+    _refreshOpenMatchRequestsTimer?.cancel();
+    _refreshOpenMatchRequestsTimer = Timer(
+      const Duration(milliseconds: 500),
+      () {
+        if (mounted) {
+          _refreshOpenMatchRequests();
+        }
+      },
+    );
   }
 
   Future<void> _refreshInvitations() async {
@@ -142,18 +166,18 @@ class _InvitationScreenState extends State<InvitationScreen>
 
       if (mounted) {
         setState(() {
-          // Handle Either<Failure, InvitationListResponse> properly
+          // Handle Either<Failure, UnifiedInvitationListResponse> properly
           results[0].fold(
             (failure) =>
                 print('Error loading received invitations: ${failure.message}'),
             (response) => _receivedInvitations =
-                (response as InvitationListResponse).invitations,
+                (response as UnifiedInvitationListResponse).invitations,
           );
           results[1].fold(
             (failure) =>
                 print('Error loading sent invitations: ${failure.message}'),
             (response) => _sentInvitations =
-                (response as InvitationListResponse).invitations,
+                (response as UnifiedInvitationListResponse).invitations,
           );
         });
       }
@@ -191,6 +215,37 @@ class _InvitationScreenState extends State<InvitationScreen>
     }
   }
 
+  Future<void> _refreshOpenMatchRequests() async {
+    try {
+      final results = await Future.wait([
+        _invitationRepository.getReceivedOpenMatchJoinRequests(),
+        _invitationRepository.getSentOpenMatchJoinRequests(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          // Handle Either<Failure, OpenMatchJoinRequestListResponse> properly
+          results[0].fold(
+            (failure) => print(
+              'Error loading received open match requests: ${failure.message}',
+            ),
+            (response) => _receivedOpenMatchRequests =
+                (response as OpenMatchJoinRequestListResponse).requests,
+          );
+          results[1].fold(
+            (failure) => print(
+              'Error loading sent open match requests: ${failure.message}',
+            ),
+            (response) => _sentOpenMatchRequests =
+                (response as OpenMatchJoinRequestListResponse).requests,
+          );
+        });
+      }
+    } catch (e) {
+      print('Error refreshing open match requests: $e');
+    }
+  }
+
   Future<void> _loadData() async {
     await Future.wait([_loadReceivedData(), _loadSentData()]);
   }
@@ -205,6 +260,7 @@ class _InvitationScreenState extends State<InvitationScreen>
       final results = await Future.wait([
         _invitationRepository.getReceivedInvitations(),
         _invitationRepository.getReceivedDraftMatchRequests(),
+        _invitationRepository.getReceivedOpenMatchJoinRequests(),
       ]);
 
       setState(() {
@@ -215,7 +271,7 @@ class _InvitationScreenState extends State<InvitationScreen>
             _receivedInvitations = [];
           },
           (response) => _receivedInvitations =
-              (response as InvitationListResponse).invitations,
+              (response as UnifiedInvitationListResponse).invitations,
         );
         results[1].fold(
           (failure) {
@@ -224,6 +280,14 @@ class _InvitationScreenState extends State<InvitationScreen>
           },
           (response) => _receivedRequests =
               (response as DraftMatchRequestListResponse).requests,
+        );
+        results[2].fold(
+          (failure) {
+            _errorMessage = 'Lỗi tải yêu cầu tham gia: ${failure.message}';
+            _receivedOpenMatchRequests = [];
+          },
+          (response) => _receivedOpenMatchRequests =
+              (response as OpenMatchJoinRequestListResponse).requests,
         );
         _isLoadingReceived = false;
       });
@@ -245,6 +309,7 @@ class _InvitationScreenState extends State<InvitationScreen>
       final results = await Future.wait([
         _invitationRepository.getSentInvitations(),
         _invitationRepository.getSentDraftMatchRequests(),
+        _invitationRepository.getSentOpenMatchJoinRequests(),
       ]);
 
       setState(() {
@@ -255,7 +320,7 @@ class _InvitationScreenState extends State<InvitationScreen>
             _sentInvitations = [];
           },
           (response) => _sentInvitations =
-              (response as InvitationListResponse).invitations,
+              (response as UnifiedInvitationListResponse).invitations,
         );
         results[1].fold(
           (failure) {
@@ -264,6 +329,15 @@ class _InvitationScreenState extends State<InvitationScreen>
           },
           (response) => _sentRequests =
               (response as DraftMatchRequestListResponse).requests,
+        );
+        results[2].fold(
+          (failure) {
+            _errorMessage =
+                'Lỗi tải yêu cầu tham gia đã gửi: ${failure.message}';
+            _sentOpenMatchRequests = [];
+          },
+          (response) => _sentOpenMatchRequests =
+              (response as OpenMatchJoinRequestListResponse).requests,
         );
         _isLoadingSent = false;
       });
@@ -277,6 +351,50 @@ class _InvitationScreenState extends State<InvitationScreen>
 
   Future<void> _handleInvitationAction(
     InvitationModel invitation,
+    String action,
+  ) async {
+    try {
+      final request = InvitationActionRequest(action: action);
+
+      final result = await _invitationRepository.respondToInvitation(
+        invitation.id,
+        request,
+      );
+
+      result.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi: ${failure.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                action == 'ACCEPT'
+                    ? 'Đã chấp nhận lời mời'
+                    : 'Đã từ chối lời mời',
+              ),
+              backgroundColor: action == 'ACCEPT' ? Colors.green : Colors.red,
+            ),
+          );
+
+          // Reload data
+          _loadReceivedData();
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _handleUnifiedInvitationAction(
+    UnifiedInvitationModel invitation,
     String action,
   ) async {
     try {
@@ -347,7 +465,50 @@ class _InvitationScreenState extends State<InvitationScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                action == 'ACCEPT' ? 'Đã chấp nhận yêu cầu' : 'Đã từ chối yêu cầu',
+                action == 'ACCEPT'
+                    ? 'Đã chấp nhận yêu cầu'
+                    : 'Đã từ chối yêu cầu',
+              ),
+              backgroundColor: action == 'ACCEPT' ? Colors.green : Colors.red,
+            ),
+          );
+
+          // Reload data only on success
+          _loadReceivedData();
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _handleOpenMatchRequestAction(
+    OpenMatchJoinRequestModel request,
+    String action,
+  ) async {
+    try {
+      final result = action == 'ACCEPT'
+          ? await _invitationRepository.approveOpenMatchJoinRequest(request.id)
+          : await _invitationRepository.rejectOpenMatchJoinRequest(request.id);
+
+      result.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi: ${failure.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                action == 'ACCEPT'
+                    ? 'Đã chấp nhận yêu cầu tham gia'
+                    : 'Đã từ chối yêu cầu tham gia',
               ),
               backgroundColor: action == 'ACCEPT' ? Colors.green : Colors.red,
             ),
@@ -417,13 +578,13 @@ class _InvitationScreenState extends State<InvitationScreen>
     for (final invitation in _receivedInvitations) {
       allReceivedItems.add(
         InvitationCard(
-          invitation: invitation,
+          unifiedInvitation: invitation,
           isReceived: true,
           onAccept: invitation.isPending
-              ? () => _handleInvitationAction(invitation, 'ACCEPT')
+              ? () => _handleUnifiedInvitationAction(invitation, 'ACCEPT')
               : null,
           onReject: invitation.isPending
-              ? () => _handleInvitationAction(invitation, 'REJECT')
+              ? () => _handleUnifiedInvitationAction(invitation, 'REJECT')
               : null,
         ),
       );
@@ -440,6 +601,22 @@ class _InvitationScreenState extends State<InvitationScreen>
               : null,
           onReject: request.isPending
               ? () => _handleRequestAction(request, 'REJECT')
+              : null,
+        ),
+      );
+    }
+
+    // Add open match join requests
+    for (final request in _receivedOpenMatchRequests) {
+      allReceivedItems.add(
+        InvitationCard(
+          openMatchJoinRequest: request,
+          isReceived: true,
+          onAccept: request.isPending
+              ? () => _handleOpenMatchRequestAction(request, 'ACCEPT')
+              : null,
+          onReject: request.isPending
+              ? () => _handleOpenMatchRequestAction(request, 'REJECT')
               : null,
         ),
       );
@@ -512,7 +689,7 @@ class _InvitationScreenState extends State<InvitationScreen>
     // Add sent invitations
     for (final invitation in _sentInvitations) {
       allSentItems.add(
-        InvitationCard(invitation: invitation, isReceived: false),
+        InvitationCard(unifiedInvitation: invitation, isReceived: false),
       );
     }
 
@@ -520,6 +697,13 @@ class _InvitationScreenState extends State<InvitationScreen>
     for (final request in _sentRequests) {
       allSentItems.add(
         InvitationCard(draftMatchRequest: request, isReceived: false),
+      );
+    }
+
+    // Add sent open match join requests
+    for (final request in _sentOpenMatchRequests) {
+      allSentItems.add(
+        InvitationCard(openMatchJoinRequest: request, isReceived: false),
       );
     }
 

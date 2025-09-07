@@ -104,7 +104,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
       
       emit(LocationAvailable(
         position: userLocation,
-        address: currentAddress,
+        address: currentAddress ?? 'Unknown location',
       ));
       
     } catch (e) {

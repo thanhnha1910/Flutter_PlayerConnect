@@ -298,12 +298,10 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       final results = await Future.wait([
         getLocationsUseCase(),
         getLocationCardsUseCase(),
-        getActiveSportsUseCase(),
       ]);
 
       final mapLocationsResult = results[0] as Either<Failure, List<LocationMapModel>>;
       final cardLocationsResult = results[1] as Either<Failure, List<LocationCardResponse>>;
-      final sportsResult = results[2] as Either<Failure, List<SportModel>>;
 
       final mapLocations = mapLocationsResult.fold(
         (failure) => <LocationMapModel>[],
@@ -315,10 +313,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         (locations) => locations,
       );
 
-      final sports = sportsResult.fold(
-        (failure) => <SportModel>[],
-        (sportsList) => sportsList,
-      );
+      // Load sports separately since it returns List<SportModel> directly
+      final sports = await getActiveSportsUseCase();
 
       // Robust state machine for permission flow
       try {
@@ -596,12 +592,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     final currentState = state as ExploreLoaded;
 
     try {
-      final result = await getActiveSportsUseCase();
-
-      result.fold(
-            (failure) => emit(ExploreError('Failed to load sports: ${failure.toString()}')),
-            (sports) => emit(currentState.copyWith(sports: sports)),
-      );
+      final sports = await getActiveSportsUseCase();
+      emit(currentState.copyWith(sports: sports));
     } catch (e) {
       emit(ExploreError('Unexpected error loading sports: ${e.toString()}'));
     }
@@ -660,12 +652,10 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         final results = await Future.wait([
           getLocationsUseCase(),
           getLocationCardsUseCase(),
-          getActiveSportsUseCase(),
         ]);
 
         final mapLocationsResult = results[0] as Either<Failure, List<LocationMapModel>>;
         final cardLocationsResult = results[1] as Either<Failure, List<LocationCardResponse>>;
-        final sportsResult = results[2] as Either<Failure, List<SportModel>>;
 
         final mapLocations = mapLocationsResult.fold(
               (failure) => <LocationMapModel>[],
@@ -677,10 +667,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
               (locations) => locations,
         );
 
-        final sports = sportsResult.fold(
-              (failure) => <SportModel>[],
-              (sportsList) => sportsList,
-        );
+        // Load sports separately since it returns List<SportModel> directly
+        final sports = await getActiveSportsUseCase();
 
         // Emit basic loaded state
         emit(ExploreLoaded(

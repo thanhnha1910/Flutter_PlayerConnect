@@ -9,6 +9,7 @@ enum JoinStatus { NOT_JOINED, REQUEST_PENDING, JOINED }
 @JsonSerializable(explicitToJson: true)
 class OpenMatchModel extends Equatable {
   final int id;
+  final int? bookingId; // Separate field for booking ID
   final String fieldName; // Deprecated: use locationName instead
   final String locationName;
   final String fieldAddress;
@@ -37,6 +38,7 @@ class OpenMatchModel extends Equatable {
 
   OpenMatchModel({
     required this.id,
+    this.bookingId,
     String? fieldName,
     String? locationName,
     required this.fieldAddress,
@@ -75,23 +77,55 @@ class OpenMatchModel extends Equatable {
        tags = tags ?? requiredTags ?? [],
        requiredTags = requiredTags ?? tags ?? <String>[];
 
-  factory OpenMatchModel.fromJson(Map<String, dynamic> json) {
+  // Map sport type từ backend format sang frontend format
+  static String _mapSportType(String? sportType) {
+    if (sportType == null) return 'football';
+
+    switch (sportType.toUpperCase()) {
+      case 'BONG_DA':
+      case 'FOOTBALL':
+        return 'football';
+      case 'BONG_RO':
+      case 'BASKETBALL':
+        return 'basketball';
+      case 'TENNIS':
+        return 'tennis';
+      case 'BADMINTON':
+        return 'badminton';
+      default:
+        return sportType.toLowerCase();
+    }
+  }
+
+  factory OpenMatchModel.fromJson(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
     // Parse join status từ string
     JoinStatus parseJoinStatus(String? status) {
-      switch (status?.toLowerCase()) {
-        case 'joined':
-        case 'accepted':
+      print('DEBUG: Parsing join status: "$status"');
+      switch (status?.toUpperCase()) {
+        case 'JOINED':
+        case 'ACCEPTED':
           return JoinStatus.JOINED;
-        case 'pending':
-        case 'request_pending':
+        case 'PENDING':
+        case 'REQUEST_PENDING':
           return JoinStatus.REQUEST_PENDING;
         default:
           return JoinStatus.NOT_JOINED;
       }
     }
 
+    final creatorUserId =
+        (json['creatorUserId'] ?? json['creator_user_id'] ?? json['createdBy'])
+            ?.toString();
+    final isCreator = currentUserId != null && creatorUserId != null
+        ? creatorUserId == currentUserId
+        : (json['isCreator'] ?? json['is_creator'] ?? false);
+
     return OpenMatchModel(
-      id: json['bookingId'] ?? json['id'] ?? 0,
+      id: json['id'] ?? json['bookingId'] ?? 0,
+      bookingId: json['bookingId'],
       fieldName: json['fieldName'],
       locationName: json['locationName'] ?? json['fieldName'] ?? '',
       fieldAddress: json['locationAddress'] ?? json['locationName'] ?? '',
@@ -130,18 +164,14 @@ class OpenMatchModel extends Equatable {
           [],
       skillLevel: json['skillLevel'] ?? json['skill_level'] ?? 'intermediate',
       gameType:
-          json['gameType'] ?? json['sportType']?.toLowerCase() ?? 'football',
+          json['gameType'] ?? _mapSportType(json['sportType']) ?? 'football',
       currentUserJoinStatus: parseJoinStatus(
         json['currentUserJoinStatus'] ??
             json['current_user_join_status'] ??
             json['joinStatus'],
       ),
-      creatorUserId:
-          (json['creatorUserId'] ??
-                  json['creator_user_id'] ??
-                  json['createdBy'])
-              ?.toString(),
-      isCreator: json['isCreator'] ?? json['is_creator'] ?? false,
+      creatorUserId: creatorUserId,
+      isCreator: isCreator,
     );
   }
 
@@ -195,6 +225,7 @@ class OpenMatchModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    bookingId,
     fieldName,
     fieldAddress,
     startTime,
