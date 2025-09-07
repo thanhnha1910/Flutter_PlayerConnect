@@ -13,8 +13,6 @@ import '../../bloc/community/community_bloc.dart';
 import '../draft_match/draft_match_list_screen.dart';
 import '../open_match/open_match_list_screen.dart';
 import '../../bloc/draft_match/draft_match_bloc.dart';
-import '../tournament/tournament_list_screen.dart';
-import '../../bloc/tournament/tournament_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key}) {

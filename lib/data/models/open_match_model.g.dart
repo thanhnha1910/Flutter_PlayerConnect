@@ -9,7 +9,6 @@ part of 'open_match_model.dart';
 OpenMatchModel _$OpenMatchModelFromJson(Map<String, dynamic> json) =>
     OpenMatchModel(
       id: (json['id'] as num).toInt(),
-      bookingId: (json['bookingId'] as num?)?.toInt(),
       fieldName: json['fieldName'] as String?,
       locationName: json['locationName'] as String?,
       fieldAddress: json['fieldAddress'] as String,
@@ -48,7 +47,6 @@ Map<String, dynamic> _$OpenMatchModelToJson(
   OpenMatchModel instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'bookingId': instance.bookingId,
   'fieldName': instance.fieldName,
   'locationName': instance.locationName,
   'fieldAddress': instance.fieldAddress,

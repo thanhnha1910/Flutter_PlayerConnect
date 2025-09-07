@@ -14,7 +14,7 @@ class ApiConstants {
 
   static String get aiServiceUrl {
     if (kIsWeb) {
-      return 'http://localhost:5002';
+      return 'http://10.0.2.2:5002';
     } else if (Platform.isAndroid) {
       return 'http://localhost:5002';
     } else if (Platform.isIOS) {

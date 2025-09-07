@@ -78,7 +78,7 @@ class TournamentReceiptScreen extends StatelessWidget {
                 _buildDetailRow('Location', tournament.location ?? 'N/A'),
                 _buildDetailRow('Start Date', _formatDate(tournament.startDate)),
                 _buildDetailRow('End Date', _formatDate(tournament.endDate)),
-                _buildDetailRow('Entry Fee', '\$${tournament.registrationFee?.toStringAsFixed(2) ?? '0.00'}'),
+                _buildDetailRow('Entry Fee', '\$${tournament.registrationFee.toStringAsFixed(2) ?? '0.00'}'),
                 _buildDetailRow('Max Teams', '${tournament.maxTeams ?? 'N/A'}'),
               ],
             ),
@@ -99,7 +99,7 @@ class TournamentReceiptScreen extends StatelessWidget {
               title: 'Payment Information',
               children: [
                 _buildDetailRow('Payment ID', paymentId),
-                _buildDetailRow('Amount Paid', '\$${tournament.registrationFee?.toStringAsFixed(2) ?? '0.00'}'),
+                _buildDetailRow('Amount Paid', '\$${tournament.registrationFee.toStringAsFixed(2) ?? '0.00'}'),
                 _buildDetailRow('Payment Method', 'PayPal'),
                 _buildDetailRow('Payment Date', _formatDateTime(DateTime.now())),
                 _buildDetailRow('Status', 'Completed', valueColor: Colors.green),

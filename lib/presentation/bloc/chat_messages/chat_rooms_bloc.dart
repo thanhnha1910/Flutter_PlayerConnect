@@ -5,7 +5,6 @@ import '../../../domain/usecases/chat/get_chat_rooms_usecase.dart';
 import '../../../domain/usecases/chat/create_chat_room_usecase.dart';
 import '../../../domain/usecases/chat/join_chat_room_usecase.dart';
 import '../../../domain/usecases/chat/connect_websocket_usecase.dart';
-import '../../../data/models/chat_room_model.dart';
 import 'chat_rooms_event.dart';
 import 'chat_rooms_state.dart';
 

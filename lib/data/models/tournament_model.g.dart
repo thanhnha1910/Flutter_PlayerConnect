@@ -27,6 +27,9 @@ TournamentModel _$TournamentModelFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String,
       rules: json['rules'] as String?,
       prizes: (json['prize'] as num?)?.toInt(),
+      participatingTeams: (json['participatingTeams'] as List<dynamic>?)
+          ?.map((e) => TeamModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),

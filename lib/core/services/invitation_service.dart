@@ -1,6 +1,5 @@
 import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
-import '../../data/models/ai_recommendation_model.dart';
 import '../../data/models/invitation_model.dart';
 import '../../data/models/unified_invitation_model.dart';
 import '../../domain/repositories/invitation_repository.dart';

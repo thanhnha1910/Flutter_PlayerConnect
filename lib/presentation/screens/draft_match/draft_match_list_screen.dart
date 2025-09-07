@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/draft_match_model.dart';
 import '../../bloc/draft_match/draft_match_bloc.dart';
@@ -12,7 +11,6 @@ import '../../../core/providers/websocket_provider.dart';
 import '../../../core/providers/draft_match_subscription_provider.dart';
 import '../../widgets/draft_match_card.dart';
 import 'create_draft_match_screen.dart';
-import '../explore/explore_screen.dart';
 import '../main_navigation_screen.dart';
 
 class DraftMatchListScreen extends StatefulWidget {

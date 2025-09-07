@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'tournament_model.dart';
-import 'team_model.dart';
 
 part 'tournament_registration_model.g.dart';
 

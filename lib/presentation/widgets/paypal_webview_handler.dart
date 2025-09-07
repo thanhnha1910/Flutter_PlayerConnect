@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../../data/models/booking_request_model.dart';
-import '../../data/repositories/booking_repository_impl.dart';
-import '../../core/di/injection.dart';
 
 class PayPalWebViewHandler extends StatefulWidget {
   final String? paymentUrl;
@@ -13,13 +10,13 @@ class PayPalWebViewHandler extends StatefulWidget {
   final VoidCallback? onPaymentCancel;
 
   const PayPalWebViewHandler({
-    Key? key,
+    super.key,
     this.paymentUrl,
     this.amount,
     required this.onPaymentSuccess,
     required this.onPaymentError,
     this.onPaymentCancel,
-  }) : super(key: key);
+  });
 
   @override
   State<PayPalWebViewHandler> createState() => _PayPalWebViewHandlerState();

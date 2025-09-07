@@ -45,7 +45,7 @@ class ChatbotRemoteDataSourceImpl implements ChatbotRemoteDataSource {
         ),
       );
       return response.statusCode == 200;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:player_connect/presentation/bloc/chat_messages/chat_rooms_bloc.dart';
 import 'package:player_connect/presentation/bloc/chat_messages/chat_rooms_event.dart';
-import 'package:player_connect/presentation/bloc/chat_messages/chat_rooms_state.dart';
 import '../../../core/di/injection.dart';
 
 import '../../../data/models/chat_message_model.dart';
@@ -24,10 +23,10 @@ class ChatRoomScreen extends StatefulWidget {
   final String? roomName;
 
   const ChatRoomScreen({
-    Key? key,
+    super.key,
     required this.roomId,
     this.roomName,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();

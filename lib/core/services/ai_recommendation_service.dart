@@ -98,8 +98,9 @@ class AIRecommendationService {
 
       if (location != null) queryParams['location'] = location;
       if (fieldType != null) queryParams['fieldType'] = fieldType;
-      if (date != null)
+      if (date != null) {
         queryParams['date'] = date.toIso8601String().split('T')[0];
+      }
 
       final response = await _apiClient.dio.get(
         ApiConstants.openMatchesWithUserInfoEndpoint,

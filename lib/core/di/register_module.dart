@@ -15,9 +15,6 @@ import 'package:player_connect/domain/usecases/community/like_post_usecase.dart'
 import 'package:player_connect/domain/usecases/community/reply_comment_usecase.dart';
 import 'package:player_connect/data/datasources/community_remote_datasource.dart';
 
-import 'injection.dart';
-
-
 @module
 abstract class RegisterModule {
   @lazySingleton

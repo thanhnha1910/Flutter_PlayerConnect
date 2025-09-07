@@ -28,7 +28,6 @@ class TournamentModel extends Equatable {
   @JsonKey(name: 'prize')
   final int? prizes;
   final List<TeamModel>? participatingTeams;
-
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -42,14 +41,13 @@ class TournamentModel extends Equatable {
     required this.endDate,
     this.registrationDeadline,
     required this.maxTeams,
-        this.participatingTeams,
-
     this.currentTeams = 0,
     required this.registrationFee,
     required this.status,
     this.location,
     this.rules,
     this.prizes,
+    this.participatingTeams,
     this.createdAt,
     this.updatedAt,
   });
@@ -97,8 +95,7 @@ class TournamentModel extends Equatable {
     String? location,
     String? rules,
     int? prizes,
-        List<TeamModel>? participatingTeams,
-
+    List<TeamModel>? participatingTeams,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -116,10 +113,9 @@ class TournamentModel extends Equatable {
       registrationFee: registrationFee ?? this.registrationFee,
       status: status ?? this.status,
       location: location ?? this.location,
-            participatingTeams: participatingTeams ?? this.participatingTeams,
-
       rules: rules ?? this.rules,
       prizes: prizes ?? this.prizes,
+      participatingTeams: participatingTeams ?? this.participatingTeams,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

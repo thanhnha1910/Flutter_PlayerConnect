@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
-import 'user_model.dart';
 
 part 'draft_match_model.g.dart';
 

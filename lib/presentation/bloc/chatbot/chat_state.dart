@@ -18,22 +18,22 @@ class ChatInitial extends ChatState {}
 
 class ChatLoading extends ChatState {
   const ChatLoading({
-    required List<ChatMessage> messages,
-    String? sessionId,
-  }) : super(messages: messages, isLoading: true, sessionId: sessionId);
+    required super.messages,
+    super.sessionId,
+  }) : super(isLoading: true);
 }
 
 class ChatLoaded extends ChatState {
   const ChatLoaded({
-    required List<ChatMessage> messages,
-    String? sessionId,
-  }) : super(messages: messages, sessionId: sessionId);
+    required super.messages,
+    super.sessionId,
+  });
 }
 
 class ChatError extends ChatState {
   const ChatError({
-    required String error,
-    required List<ChatMessage> messages,
-    String? sessionId,
-  }) : super(messages: messages, error: error, sessionId: sessionId);
+    required String super.error,
+    required super.messages,
+    super.sessionId,
+  });
 }

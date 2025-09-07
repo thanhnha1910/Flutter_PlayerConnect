@@ -201,15 +201,6 @@ class _OpenMatchCardState extends State<OpenMatchCard> {
         },
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã rời khỏi trận đấu!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onRefresh?.call();
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
